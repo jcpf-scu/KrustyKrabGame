@@ -12,27 +12,28 @@
 IntroWindow::IntroWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setFixedSize(700, 520);
+    setFixedSize(800, 600);
     setWindowTitle("游戏说明");
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
 
     QVBoxLayout *layout = new QVBoxLayout(central);
-    layout->setSpacing(15);
-    layout->setContentsMargins(40, 30, 40, 30);
+    layout->setSpacing(9);
+    layout->setContentsMargins(32, 21, 32, 16);
 
     // 标题
     QLabel *title = new QLabel("蟹堡王烹饪挑战 - 游戏说明", this);
     title->setAlignment(Qt::AlignCenter);
-    title->setStyleSheet("font-size: 26px; font-weight: bold; color: #E63946;");
+    title->setStyleSheet("font-size: 29px; font-weight: bold; color: #E63946;");
     layout->addWidget(title);
 
     // 说明正文
     QLabel *text = new QLabel(this);
     text->setWordWrap(true);
+    text->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     text->setStyleSheet(
-        "font-size: 17px; color: #1D3557; line-height: 1.6;"
+        "font-size: 20px; color: #1D3557; line-height: 1.5;"
         "font-family: 'Microsoft YaHei', sans-serif;"
     );
     text->setText(
@@ -50,14 +51,14 @@ IntroWindow::IntroWindow(QWidget *parent)
         "【星级评定】\n"
         "完成 1 单 = 一星  |  3 单 = 二星  |  5 单 = 三星"
     );
-    layout->addWidget(text);
+    layout->addWidget(text, 1);
 
     // 关闭按钮
     QPushButton *closeBtn = new QPushButton("知道了", this);
-    closeBtn->setFixedHeight(45);
+    closeBtn->setFixedHeight(44);
     closeBtn->setStyleSheet(
         "QPushButton { background-color: #E63946; color: white;"
-        "font-size: 18px; font-weight: bold; border-radius: 8px; }"
+        "font-size: 21px; font-weight: bold; border-radius: 8px; }"
     );
     layout->addWidget(closeBtn);
 
