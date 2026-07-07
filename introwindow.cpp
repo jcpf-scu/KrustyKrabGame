@@ -1,5 +1,4 @@
 /**
- * @file introwindow.cpp
  * @brief 游戏说明窗口实现
  */
 

@@ -1,5 +1,4 @@
 /**
- * @file main.cpp
  * @brief 程序入口：创建 Qt 应用并显示主菜单窗口
  */
 

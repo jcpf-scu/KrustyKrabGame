@@ -1,6 +1,5 @@
 /**
- * @file mainwindow.cpp
- * @brief 主菜单界面实现（参考 potato-sandwich-shop，用代码布局，不用 .ui 文件）
+ * @brief 主菜单界面实现
  */
 
 #include "mainwindow.h"

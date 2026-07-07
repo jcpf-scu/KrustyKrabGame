@@ -1,5 +1,4 @@
 /**
- * @file menuwindow.cpp
  * @brief 暂停菜单实现
  */
 

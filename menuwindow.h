@@ -1,5 +1,4 @@
 /**
- * @file menuwindow.h
  * @brief 游戏暂停菜单：继续 / 重新开始 / 返回大厅
  */
 

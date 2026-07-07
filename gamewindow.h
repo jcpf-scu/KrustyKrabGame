@@ -1,5 +1,4 @@
 /**
- * @file gamewindow.h
  * @brief 游戏主窗口：汉堡制作、计时、计分（核心玩法）
  */
 
@@ -31,6 +30,8 @@ private slots:
     void onBottomBunClicked();  // 添加底面包
     void onRawPattyClicked();   // 添加生肉饼
     void onTopBunClicked();     // 添加顶面包
+    void onLettuceClicked();    // 添加生菜
+    void onTomatoClicked();    // 添加番茄
 
     // ---- 操作按钮 ----
     void onGrillClicked();      // 煎制：生肉饼 → 肉饼
@@ -69,6 +70,8 @@ private:
     QPushButton *bottomBunBtn;
     QPushButton *rawPattyBtn;
     QPushButton *topBunBtn;
+    QPushButton *lettuceBtn;
+    QPushButton *tomatoBtn;
     QPushButton *grillBtn;
     QPushButton *discardBtn;
     QPushButton *submitBtn;

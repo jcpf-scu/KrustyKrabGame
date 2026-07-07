@@ -12,6 +12,7 @@
 #include <QWidget>
 #include <QFile>
 #include <QDataStream>
+#include <QTime>
 
 // 食材按钮统一样式
 static const char *BTN_STYLE =
@@ -107,9 +108,11 @@ GameWindow::GameWindow(QWidget *parent)
 
     QHBoxLayout *ingredientRow = new QHBoxLayout();
     bottomBunBtn = new QPushButton("底面包", this);
-    rawPattyBtn  = new QPushButton("生肉饼", this);
-    topBunBtn    = new QPushButton("顶面包", this);
-    for (QPushButton *btn : {bottomBunBtn, rawPattyBtn, topBunBtn}) {
+    rawPattyBtn = new QPushButton("生肉饼", this);
+    topBunBtn = new QPushButton("顶面包", this);
+    lettuceBtn = new QPushButton("生菜",this);
+    tomatoBtn= new QPushButton("番茄",this);
+    for (QPushButton *btn : {bottomBunBtn, rawPattyBtn,lettuceBtn,tomatoBtn, topBunBtn}) {
         btn->setFixedHeight(50);
         btn->setStyleSheet(BTN_STYLE);
         ingredientRow->addWidget(btn);
@@ -144,7 +147,7 @@ GameWindow::GameWindow(QWidget *parent)
 
     // ---- 底部分数栏 ----
     QHBoxLayout *bottomBar = new QHBoxLayout();
-    scoreLabel = new QLabel("得分：0", this);
+    scoreLabel = new QLabel("本局累计金币：0", this);
     scoreLabel->setStyleSheet("font-size: 22px; font-weight: bold; color: #E63946;");
     maxScoreLabel = new QLabel("最高纪录：" + QString::number(maxScore), this);
     maxScoreLabel->setStyleSheet("font-size: 18px; color: #457B9D;");
@@ -190,6 +193,16 @@ void GameWindow::onTopBunClicked()
     currentIngredients.append("顶面包");
     updatePlateDisplay();
 }
+void GameWindow::onLettuceClicked()
+{
+    currentIngredients.append("生菜");
+    updatePlateDisplay();
+}
+void GameWindow::onTomatoClicked()
+{
+    currentIngredients.append("番茄");
+    updatePlateDisplay();
+}
 
 // 煎制：将盘子里的「生肉饼」变成「肉饼」（类似参考项目的搅拌功能）
 void GameWindow::onGrillClicked()
@@ -233,12 +246,12 @@ void GameWindow::onSubmitClicked()
         comboCount++;
         if (comboCount >= 5) {
             score += 10;
-            showFeedback("五连击！额外 +10 分！", "#E63946");
+            showFeedback("五连击！额外 +10 金币！", "#E63946");
         } else if (comboCount >= 3) {
             score += 5;
-            showFeedback("三连击！额外 +5 分！", "#F4A261");
+            showFeedback("三连击！额外 +5 金币！", "#F4A261");
         } else {
-            showFeedback("美味！订单完成 +10 分", "#2A9D8F");
+            showFeedback("美味！订单完成 +10 金币", "#2A9D8F");
         }
         completedOrders++;
         currentIngredients.clear();
@@ -252,7 +265,7 @@ void GameWindow::onSubmitClicked()
         score -= 5;
         comboCount = 0;
         scoreLabel->setText("得分：" + QString::number(score));
-        showFeedback("订单错误！-5 分，请重新制作", "#E63946");
+        showFeedback("订单错误！消耗原材料-5金币，请重新制作", "#E63946");
         currentIngredients.clear();
         updatePlateDisplay();
     }
@@ -260,11 +273,23 @@ void GameWindow::onSubmitClicked()
 
 // ========== 订单与显示 ==========
 
-// 简单模式：固定订单「底面包 + 肉饼 + 顶面包」
+// 简单模式：
 void GameWindow::generateNewOrder()
 {
     currentOrder.clear();
-    currentOrder << "底面包" << "肉饼" << "顶面包";
+    QStringList order0={"底面包","肉饼","顶面包"};
+    QStringList order1={"底面包","生菜","肉饼","顶面包"};
+    QStringList order2={"底面包","生菜","肉饼","番茄","顶面包"};
+    //生成0~2的随机数
+    qsrand(QTime::currentTime().msec());
+    int r = qrand()%3;
+    if(r==0){
+        currentOrder=order0;
+    }else if(r==1){
+        currentOrder=order1;
+    }else if(r==2){
+        currentOrder=order2;
+    }else
     orderLabel->setText("订单：" + currentOrder.join(" + "));
 }
 
@@ -330,7 +355,7 @@ void GameWindow::showStarRating()
     else                starMsg = "没有星星，下次加油！";
 
     QMessageBox::information(nullptr, "时间到！",
-        QString("完成订单：%1 单\n本次得分：%2\n最高纪录：%3\n\n%4")
+        QString("完成订单：%1 单\n本次获得金币：%2\n最高纪录：%3\n\n%4")
         .arg(completedOrders).arg(score).arg(maxScore).arg(starMsg));
 }
 
@@ -375,7 +400,7 @@ void GameWindow::onRestartGame()
     orderSerial = 1;
     currentIngredients.clear();
 
-    scoreLabel->setText("得分：0");
+    scoreLabel->setText("积累金币：0");
     serialLabel->setText("第 1 单");
     timerLabel->setText("01:00");
     feedbackLabel->clear();

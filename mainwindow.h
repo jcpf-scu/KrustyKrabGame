@@ -1,5 +1,4 @@
 /**
- * @file mainwindow.h
  * @brief 主菜单窗口：开始游戏、查看说明、退出
  */
 
