@@ -7,6 +7,7 @@
 #include "gamewindow.h"
 #include "introwindow.h"
 #include <QLabel>
+#include <QPixmap>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,51 +16,67 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(800, 600);
     setWindowTitle("蟹堡王 - Krusty Krab");
 
-    // ========= 背景层 =========
+    // ========= 背景层（第一张参考图） =========
     QLabel *bgLabel = new QLabel(this);
     bgLabel->setGeometry(0, 0, 800, 600);
-    bgLabel->setStyleSheet("background-color: #F1FAEE;");
+    bgLabel->setScaledContents(true);
+    QPixmap bg(":/images/start_bg.jpg");
+    if (bg.isNull()) {
+        bg.load("images/start_bg.jpg");
+    }
+    if (!bg.isNull()) {
+        bgLabel->setPixmap(bg.scaled(bgLabel->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+    } else {
+        bgLabel->setStyleSheet("background-color: #8EE7E1;");
+    }
     bgLabel->lower();  // 放到最底层
 
     // ========= 标题文字 =========
-    QLabel *title = new QLabel("蟹堡王烹饪挑战", this);
-    title->setGeometry(100, 80, 600, 60);
+    QLabel *title = new QLabel("蟹堡王\n烹饪挑战", this);
+    title->setGeometry(180, 84, 440, 150);
     title->setAlignment(Qt::AlignCenter);
     title->setStyleSheet(
-        "font-size: 36px; font-weight: bold; color: #E63946;"
+        "font-size: 62px; font-weight: 900; color: #FFDD00;"
+        "line-height: 1.08;"
+        "text-shadow: 2px 2px 0 #1D3557;"
         "font-family: 'Microsoft YaHei', sans-serif; background: transparent;"
     );
 
-    QLabel *subtitle = new QLabel("在限时内做出完美的蟹黄堡！", this);
-    subtitle->setGeometry(100, 150, 600, 40);
+    QLabel *subtitle = new QLabel("限时内做出美美的蟹黄堡！", this);
+    subtitle->setGeometry(225, 235, 350, 44);
     subtitle->setAlignment(Qt::AlignCenter);
     subtitle->setStyleSheet(
-        "font-size: 18px; color: #457B9D; background: transparent;"
+        "font-size: 22px; font-weight: bold; color: #2F3A4A;"
+        "background-color: rgba(255, 255, 255, 230);"
+        "border: 2px solid #B7D6F5; border-radius: 18px;"
     );
 
     // ========= 三个功能按钮 =========
     startBtn = new QPushButton("开始游戏", this);
-    startBtn->setGeometry(250, 280, 300, 55);
+    startBtn->setGeometry(250, 305, 300, 58);
     startBtn->setStyleSheet(
-        "QPushButton { background-color: #E63946; color: white;"
-        "font-size: 20px; font-weight: bold; border-radius: 8px; }"
-        "QPushButton:hover { background-color: #C1121F; }"
+        "QPushButton { background-color: #FF5A5F; color: white;"
+        "font-size: 30px; font-weight: bold; border-radius: 28px;"
+        "border: 2px solid rgba(255,255,255,180); }"
+        "QPushButton:hover { background-color: #F24950; }"
     );
 
     introBtn = new QPushButton("游戏说明", this);
-    introBtn->setGeometry(250, 360, 300, 55);
+    introBtn->setGeometry(250, 378, 300, 58);
     introBtn->setStyleSheet(
-        "QPushButton { background-color: #457B9D; color: white;"
-        "font-size: 20px; font-weight: bold; border-radius: 8px; }"
-        "QPushButton:hover { background-color: #1D3557; }"
+        "QPushButton { background-color: #4F86C6; color: white;"
+        "font-size: 30px; font-weight: bold; border-radius: 28px;"
+        "border: 2px solid rgba(255,255,255,180); }"
+        "QPushButton:hover { background-color: #3F74B4; }"
     );
 
     exitBtn = new QPushButton("退出游戏", this);
-    exitBtn->setGeometry(250, 440, 300, 55);
+    exitBtn->setGeometry(250, 451, 300, 58);
     exitBtn->setStyleSheet(
-        "QPushButton { background-color: #6C757D; color: white;"
-        "font-size: 20px; font-weight: bold; border-radius: 8px; }"
-        "QPushButton:hover { background-color: #495057; }"
+        "QPushButton { background-color: #7B8794; color: white;"
+        "font-size: 30px; font-weight: bold; border-radius: 28px;"
+        "border: 2px solid rgba(255,255,255,180); }"
+        "QPushButton:hover { background-color: #66717D; }"
     );
 
     // ========= 信号槽连接 =========

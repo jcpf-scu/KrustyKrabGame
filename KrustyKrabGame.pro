@@ -1,7 +1,7 @@
 #-------------------------------------------------
-# KrustyKrabGame - 蟹堡王烹饪模拟游戏
-# 项目路径：D:\KrustyKrabGame
-# 基于 potato-sandwich-shop 模板简化开发
+# KrustyKrabGame project file
+# Project path: D:\KrustyKrabGame
+# Based on potato-sandwich-shop template
 #-------------------------------------------------
 
 QT       += core gui
@@ -13,10 +13,10 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
-# 启用 C++11（lambda、范围 for 等语法需要）
+# Enable C++11 support
 CONFIG += c++11
 
-# 源文件列表
+# Source files
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
@@ -24,9 +24,13 @@ SOURCES += \
     menuwindow.cpp \
     introwindow.cpp
 
-# 头文件列表
+# Header files
 HEADERS += \
     mainwindow.h \
     gamewindow.h \
     menuwindow.h \
     introwindow.h
+
+RESOURCES += \
+    images.qrc
+
