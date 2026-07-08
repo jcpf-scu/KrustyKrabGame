@@ -160,6 +160,8 @@ GameWindow::GameWindow(QWidget *parent)
     connect(bottomBunBtn, &QPushButton::clicked, this, &GameWindow::onBottomBunClicked);
     connect(rawPattyBtn,  &QPushButton::clicked, this, &GameWindow::onRawPattyClicked);
     connect(topBunBtn,    &QPushButton::clicked, this, &GameWindow::onTopBunClicked);
+    connect(tomatoBtn,    &QPushButton::clicked, this, &GameWindow::onTomatoClicked);
+    connect(lettuceBtn,    &QPushButton::clicked, this, &GameWindow::onLettuceClicked);
     connect(grillBtn,     &QPushButton::clicked, this, &GameWindow::onGrillClicked);
     connect(discardBtn,   &QPushButton::clicked, this, &GameWindow::onDiscardClicked);
     connect(submitBtn,    &QPushButton::clicked, this, &GameWindow::onSubmitClicked);
@@ -289,7 +291,7 @@ void GameWindow::generateNewOrder()
         currentOrder=order1;
     }else if(r==2){
         currentOrder=order2;
-    }else
+    }
     orderLabel->setText("订单：" + currentOrder.join(" + "));
 }
 
