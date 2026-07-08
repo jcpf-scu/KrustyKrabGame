@@ -13,20 +13,53 @@
 #include <QFile>
 #include <QDataStream>
 #include <QTime>
+#include <QPixmap>
 
 // 食材按钮统一样式
 static const char *BTN_STYLE =
     "QPushButton { background-color: #FFD166; color: #1D3557;"
-    "font-size: 16px; font-weight: bold; border-radius: 6px;"
-    "font-family: 'Microsoft YaHei', sans-serif; padding: 8px; }"
+    "font-size: 20px; font-weight: bold; border-radius: 8px;"
+    "font-family: 'Microsoft YaHei', sans-serif; padding: 10px; }"
     "QPushButton:hover { background-color: #FFC145; }";
 
 // 主要操作按钮样式（提交、菜单）
 static const char *ACTION_STYLE =
     "QPushButton { background-color: #E63946; color: white;"
-    "font-size: 16px; font-weight: bold; border-radius: 6px;"
-    "font-family: 'Microsoft YaHei', sans-serif; padding: 8px; }"
+    "font-size: 20px; font-weight: bold; border-radius: 8px;"
+    "font-family: 'Microsoft YaHei', sans-serif; padding: 10px; }"
     "QPushButton:hover { background-color: #C1121F; }";
+
+// 背景图上的可读文字样式（半透明深色底 + 高对比文字）
+static const char *INFO_PANEL_STYLE =
+    "font-size: 25px; font-weight: bold; color: #FFFFFF;"
+    "background-color: rgba(29, 53, 87, 220);"
+    "border-radius: 10px; padding: 8px 16px;";
+
+static const char *ACCENT_PANEL_STYLE =
+    "font-size: 25px; font-weight: bold; color: #FFDD00;"
+    "background-color: rgba(29, 53, 87, 220);"
+    "border-radius: 10px; padding: 8px 16px;";
+
+static const char *TIMER_STYLE =
+    "font-size: 35px; font-weight: bold; color: #FFDD00;"
+    "background-color: rgba(29, 53, 87, 220);"
+    "border-radius: 10px; padding: 8px 16px;"
+    "font-family: 'Courier New', monospace;";
+
+static const char *SECTION_TITLE_STYLE =
+    "font-size: 20px; font-weight: bold; color: #FFFFFF;"
+    "background-color: rgba(29, 53, 87, 210);"
+    "border-radius: 8px; padding: 6px 14px;";
+
+static const char *SCORE_PANEL_STYLE =
+    "font-size: 28px; font-weight: bold; color: #FFDD00;"
+    "background-color: rgba(29, 53, 87, 220);"
+    "border-radius: 10px; padding: 8px 16px;";
+
+static const char *MAX_SCORE_PANEL_STYLE =
+    "font-size: 22px; font-weight: bold; color: #FFFFFF;"
+    "background-color: rgba(29, 53, 87, 210);"
+    "border-radius: 10px; padding: 8px 16px;";
 
 GameWindow::GameWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -38,9 +71,24 @@ GameWindow::GameWindow(QWidget *parent)
     , completedOrders(0)
     , timeLeft(60)   // 简单模式：60 秒倒计时
 {
-    setFixedSize(900, 650);
+    setFixedSize(1125, 812);
     setWindowTitle("蟹堡王 - 制作蟹黄堡");
-    setStyleSheet("QMainWindow { background-color: #F1FAEE; }");
+
+    // ========= 背景层 =========
+    QLabel *bgLabel = new QLabel(this);
+    bgLabel->setGeometry(0, 0, 1125, 812);
+    bgLabel->setScaledContents(true);
+    QPixmap bgPixmap(":/images/game_bg.jpg");
+    if (bgPixmap.isNull()) {
+        bgPixmap.load("images/game_bg.jpg");
+    }
+    if (!bgPixmap.isNull()) {
+        bgLabel->setPixmap(bgPixmap.scaled(bgLabel->size(),
+                                           Qt::KeepAspectRatioByExpanding,
+                                           Qt::SmoothTransformation));
+    } else {
+        bgLabel->setStyleSheet("background-color: #F1FAEE;");
+    }
 
     // 读取本地保存的最高分
     QFile file("maxscore.dat");
@@ -52,29 +100,27 @@ GameWindow::GameWindow(QWidget *parent)
 
     // ========= 搭建界面布局 =========
     QWidget *central = new QWidget(this);
+    central->setStyleSheet("background: transparent;");
     setCentralWidget(central);
     QVBoxLayout *mainLayout = new QVBoxLayout(central);
-    mainLayout->setSpacing(12);
-    mainLayout->setContentsMargins(20, 15, 20, 15);
+    mainLayout->setSpacing(15);
+    mainLayout->setContentsMargins(25, 19, 25, 19);
 
     // ---- 顶部信息栏：序号 | 订单 | 倒计时 | 菜单 ----
     QHBoxLayout *topBar = new QHBoxLayout();
     serialLabel = new QLabel("第 1 单", this);
-    serialLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #E63946;");
+    serialLabel->setStyleSheet(ACCENT_PANEL_STYLE);
 
     orderLabel = new QLabel(this);
-    orderLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #1D3557;");
+    orderLabel->setStyleSheet(INFO_PANEL_STYLE);
     orderLabel->setAlignment(Qt::AlignCenter);
 
     timerLabel = new QLabel("01:00", this);
-    timerLabel->setStyleSheet(
-        "font-size: 28px; font-weight: bold; color: #E63946;"
-        "font-family: 'Courier New', monospace;"
-    );
+    timerLabel->setStyleSheet(TIMER_STYLE);
     timerLabel->setAlignment(Qt::AlignRight);
 
     menuBtn = new QPushButton("菜单", this);
-    menuBtn->setFixedSize(60, 36);
+    menuBtn->setFixedSize(75, 45);
     menuBtn->setStyleSheet(ACTION_STYLE);
 
     topBar->addWidget(serialLabel);
@@ -83,27 +129,16 @@ GameWindow::GameWindow(QWidget *parent)
     topBar->addWidget(menuBtn);
     mainLayout->addLayout(topBar);
 
-    // 操作反馈提示（成功/失败/连击等）
+    // 操作反馈提示（成功/失败/连击等，有内容时才显示）
     feedbackLabel = new QLabel(this);
     feedbackLabel->setAlignment(Qt::AlignCenter);
-    feedbackLabel->setFixedHeight(30);
-    feedbackLabel->setStyleSheet("font-size: 18px; font-weight: bold;");
+    feedbackLabel->setFixedHeight(38);
+    feedbackLabel->hide();
     mainLayout->addWidget(feedbackLabel);
-
-    // ---- 盘子显示区 ----
-    plateLabel = new QLabel("盘子：空", this);
-    plateLabel->setAlignment(Qt::AlignCenter);
-    plateLabel->setMinimumHeight(120);
-    plateLabel->setStyleSheet(
-        "font-size: 22px; font-weight: bold; color: #1D3557;"
-        "background-color: white; border: 3px dashed #A8DADC;"
-        "border-radius: 12px; padding: 20px;"
-    );
-    mainLayout->addWidget(plateLabel);
 
     // ---- 食材按钮区 ----
     QLabel *ingredientTitle = new QLabel("食材区", this);
-    ingredientTitle->setStyleSheet("font-size: 16px; color: #457B9D; font-weight: bold;");
+    ingredientTitle->setStyleSheet(SECTION_TITLE_STYLE);
     mainLayout->addWidget(ingredientTitle);
 
     QHBoxLayout *ingredientRow = new QHBoxLayout();
@@ -113,28 +148,41 @@ GameWindow::GameWindow(QWidget *parent)
     lettuceBtn = new QPushButton("生菜",this);
     tomatoBtn= new QPushButton("番茄",this);
     for (QPushButton *btn : {bottomBunBtn, rawPattyBtn,lettuceBtn,tomatoBtn, topBunBtn}) {
-        btn->setFixedHeight(50);
+        btn->setFixedHeight(63);
         btn->setStyleSheet(BTN_STYLE);
         ingredientRow->addWidget(btn);
     }
     mainLayout->addLayout(ingredientRow);
 
+    mainLayout->addSpacing(55);
+
+    // ---- 盘子显示区 ----
+    plateLabel = new QLabel("盘子：空", this);
+    plateLabel->setAlignment(Qt::AlignCenter);
+    plateLabel->setMinimumHeight(150);
+    plateLabel->setStyleSheet(
+        "font-size: 28px; font-weight: bold; color: #1D3557;"
+        "background-color: rgba(255, 255, 255, 235); border: 3px dashed #A8DADC;"
+        "border-radius: 15px; padding: 25px;"
+    );
+    mainLayout->addWidget(plateLabel);
+
     // ---- 操作按钮区 ----
     QLabel *actionTitle = new QLabel("操作区", this);
-    actionTitle->setStyleSheet("font-size: 16px; color: #457B9D; font-weight: bold;");
+    actionTitle->setStyleSheet(SECTION_TITLE_STYLE);
     mainLayout->addWidget(actionTitle);
 
     QHBoxLayout *actionRow = new QHBoxLayout();
     grillBtn   = new QPushButton("煎制", this);
     discardBtn = new QPushButton("丢弃", this);
     submitBtn  = new QPushButton("提交订单", this);
-    grillBtn->setFixedHeight(50);
-    discardBtn->setFixedHeight(50);
-    submitBtn->setFixedHeight(50);
+    grillBtn->setFixedHeight(63);
+    discardBtn->setFixedHeight(63);
+    submitBtn->setFixedHeight(63);
     grillBtn->setStyleSheet(BTN_STYLE);
     discardBtn->setStyleSheet(
         "QPushButton { background-color: #6C757D; color: white;"
-        "font-size: 16px; font-weight: bold; border-radius: 6px; padding: 8px; }"
+        "font-size: 20px; font-weight: bold; border-radius: 8px; padding: 10px; }"
         "QPushButton:hover { background-color: #495057; }"
     );
     submitBtn->setStyleSheet(ACTION_STYLE);
@@ -148,9 +196,9 @@ GameWindow::GameWindow(QWidget *parent)
     // ---- 底部分数栏 ----
     QHBoxLayout *bottomBar = new QHBoxLayout();
     scoreLabel = new QLabel("本局累计金币：0", this);
-    scoreLabel->setStyleSheet("font-size: 22px; font-weight: bold; color: #E63946;");
+    scoreLabel->setStyleSheet(SCORE_PANEL_STYLE);
     maxScoreLabel = new QLabel("最高纪录：" + QString::number(maxScore), this);
-    maxScoreLabel->setStyleSheet("font-size: 18px; color: #457B9D;");
+    maxScoreLabel->setStyleSheet(MAX_SCORE_PANEL_STYLE);
     maxScoreLabel->setAlignment(Qt::AlignRight);
     bottomBar->addWidget(scoreLabel);
     bottomBar->addWidget(maxScoreLabel, 1);
@@ -166,6 +214,8 @@ GameWindow::GameWindow(QWidget *parent)
     connect(discardBtn,   &QPushButton::clicked, this, &GameWindow::onDiscardClicked);
     connect(submitBtn,    &QPushButton::clicked, this, &GameWindow::onSubmitClicked);
     connect(menuBtn,      &QPushButton::clicked, this, &GameWindow::onMenuClicked);
+
+    bgLabel->lower();
 
     // 生成第一单订单，启动倒计时
     generateNewOrder();
@@ -366,8 +416,14 @@ void GameWindow::showFeedback(const QString &message, const QString &color)
 {
     feedbackLabel->setText(message);
     feedbackLabel->setStyleSheet(
-        QString("font-size: 18px; font-weight: bold; color: %1;").arg(color));
-    QTimer::singleShot(2000, feedbackLabel, [this]() { feedbackLabel->clear(); });
+        QString("font-size: 22px; font-weight: bold; color: %1;"
+                "background-color: rgba(29, 53, 87, 220);"
+                "border-radius: 8px; padding: 4px 12px;").arg(color));
+    feedbackLabel->show();
+    QTimer::singleShot(2000, feedbackLabel, [this]() {
+        feedbackLabel->clear();
+        feedbackLabel->hide();
+    });
 }
 
 // ========== 暂停菜单 ==========
@@ -405,7 +461,7 @@ void GameWindow::onRestartGame()
     scoreLabel->setText("积累金币：0");
     serialLabel->setText("第 1 单");
     timerLabel->setText("01:00");
-    feedbackLabel->clear();
+    feedbackLabel->hide();
     updatePlateDisplay();
     generateNewOrder();
 

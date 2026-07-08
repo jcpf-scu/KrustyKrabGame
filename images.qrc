@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>images/start_bg.jpg</file>
+        <file>images/title_logo.png</file>
+        <file>images/game_bg.jpg</file>
     </qresource>
 </RCC>

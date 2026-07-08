@@ -12,12 +12,12 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     // ========= 窗口基本设置 =========
-    setFixedSize(800, 600);
+    setFixedSize(1000, 750);
     setWindowTitle("蟹堡王 - Krusty Krab");
 
     // ========= 背景层（第一张参考图） =========
     QLabel *bgLabel = new QLabel(this);
-    bgLabel->setGeometry(0, 0, 800, 600);
+    bgLabel->setGeometry(0, 0, 1000, 750);
     bgLabel->setScaledContents(true);
     QPixmap bg(":/images/start_bg.jpg");
     if (bg.isNull()) {
@@ -30,50 +30,58 @@ MainWindow::MainWindow(QWidget *parent)
     }
     bgLabel->lower();  // 放到最底层
 
-    // ========= 标题文字 =========
-    QLabel *title = new QLabel("蟹堡王\n烹饪挑战", this);
-    title->setGeometry(180, 84, 440, 150);
-    title->setAlignment(Qt::AlignCenter);
-    title->setStyleSheet(
-        "font-size: 62px; font-weight: 900; color: #FFDD00;"
-        "line-height: 1.08;"
-        "text-shadow: 2px 2px 0 #1D3557;"
-        "font-family: 'Microsoft YaHei', sans-serif; background: transparent;"
-    );
+    // ========= 布局常量 =========
+    const int startBtnW = 375;
+    const int startBtnH = 73;
+    const int startBtnX = (1000 - startBtnW) / 2;
+    const int startBtnY = 420;
 
-    QLabel *subtitle = new QLabel("限时内做出美美的蟹黄堡！", this);
-    subtitle->setGeometry(225, 235, 350, 44);
-    subtitle->setAlignment(Qt::AlignCenter);
-    subtitle->setStyleSheet(
-        "font-size: 22px; font-weight: bold; color: #2F3A4A;"
-        "background-color: rgba(255, 255, 255, 230);"
-        "border: 2px solid #B7D6F5; border-radius: 18px;"
-    );
+    // ========= 标题图片（居中、醒目展示） =========
+    const int titleW = 1000;
+    const int titleH = 400;
+    const int titleX = 0;
+    const int titleY = 8;
+
+    QLabel *titleImage = new QLabel(this);
+    titleImage->setGeometry(titleX, titleY, titleW, titleH);
+    titleImage->setAlignment(Qt::AlignCenter);
+    titleImage->setStyleSheet("background: transparent;");
+
+    QPixmap titlePixmap(":/images/title_logo.png");
+    if (titlePixmap.isNull()) {
+        titlePixmap.load("images/title_logo.png");
+    }
+    if (!titlePixmap.isNull()) {
+        titleImage->setPixmap(
+            titlePixmap.scaled(titleImage->size(),
+                               Qt::KeepAspectRatio,
+                               Qt::SmoothTransformation));
+    }
 
     // ========= 三个功能按钮 =========
     startBtn = new QPushButton("开始游戏", this);
-    startBtn->setGeometry(250, 305, 300, 58);
+    startBtn->setGeometry(startBtnX, startBtnY, startBtnW, startBtnH);
     startBtn->setStyleSheet(
         "QPushButton { background-color: #FF5A5F; color: white;"
-        "font-size: 30px; font-weight: bold; border-radius: 28px;"
+        "font-size: 38px; font-weight: bold; border-radius: 35px;"
         "border: 2px solid rgba(255,255,255,180); }"
         "QPushButton:hover { background-color: #F24950; }"
     );
 
     introBtn = new QPushButton("游戏说明", this);
-    introBtn->setGeometry(250, 378, 300, 58);
+    introBtn->setGeometry(startBtnX, 512, startBtnW, startBtnH);
     introBtn->setStyleSheet(
         "QPushButton { background-color: #4F86C6; color: white;"
-        "font-size: 30px; font-weight: bold; border-radius: 28px;"
+        "font-size: 38px; font-weight: bold; border-radius: 35px;"
         "border: 2px solid rgba(255,255,255,180); }"
         "QPushButton:hover { background-color: #3F74B4; }"
     );
 
     exitBtn = new QPushButton("退出游戏", this);
-    exitBtn->setGeometry(250, 451, 300, 58);
+    exitBtn->setGeometry(startBtnX, 604, startBtnW, startBtnH);
     exitBtn->setStyleSheet(
         "QPushButton { background-color: #7B8794; color: white;"
-        "font-size: 30px; font-weight: bold; border-radius: 28px;"
+        "font-size: 38px; font-weight: bold; border-radius: 35px;"
         "border: 2px solid rgba(255,255,255,180); }"
         "QPushButton:hover { background-color: #66717D; }"
     );
