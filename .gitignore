@@ -1,0 +1,24 @@
+# Build output
+build-*/
+debug/
+release/
+*.o
+*.obj
+moc_*
+ui_*
+qrc_*
+Makefile*
+object_script.*
+*.exe
+*.dll
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+
+# High score data
+maxscore.dat
+
+# OS
+.DS_Store
+Thumbs.db
