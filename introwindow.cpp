@@ -57,7 +57,10 @@ IntroWindow::IntroWindow(QWidget *parent)
     closeBtn->setFixedHeight(55);
     closeBtn->setStyleSheet(
         "QPushButton { background-color: #E63946; color: white;"
-        "font-size: 26px; font-weight: bold; border-radius: 10px; }"
+        "font-size: 26px; font-weight: bold; border-radius: 10px;"
+        "border: 2px solid rgba(255,255,255,180);"
+        "font-family: 'Microsoft YaHei', sans-serif; }"
+        "QPushButton:hover { background-color: #C1121F; }"
     );
     layout->addWidget(closeBtn);
 

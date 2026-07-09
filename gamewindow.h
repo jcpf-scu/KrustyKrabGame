@@ -5,11 +5,21 @@
 #ifndef GAMEWINDOW_H
 #define GAMEWINDOW_H
 
+#include "difficultywindow.h"
 #include <QMainWindow>
 #include <QPushButton>
 #include <QLabel>
 #include <QTimer>
 #include <QStringList>
+#include <QVector>
+
+struct PlateItem {
+    QString name;
+    int grillElapsed;  // -1=无需煎制；0~6=煎制计时中；>=7=已煎糊
+
+    QString displayName() const;
+    QString orderName() const;  // 用于订单匹配，无效食材返回空串
+};
 
 /**
  * @class GameWindow
@@ -22,70 +32,84 @@ class GameWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit GameWindow(QWidget *parent = nullptr);
+    explicit GameWindow(GameDifficulty difficulty = GameDifficulty::Easy,
+                        QWidget *parent = nullptr);
     ~GameWindow();
 
 private slots:
     // ---- 食材按钮 ----
-    void onBottomBunClicked();  // 添加底面包
-    void onRawPattyClicked();   // 添加生肉饼
-    void onTopBunClicked();     // 添加顶面包
-    void onLettuceClicked();    // 添加生菜
-    void onTomatoClicked();    // 添加番茄
+    void onBottomBunClicked();
+    void onRawPattyClicked();
+    void onTopBunClicked();
+    void onLettuceClicked();
+    void onTomatoClicked();
+    void onRawFriesClicked();
+    void onColaClicked();
 
     // ---- 操作按钮 ----
-    void onGrillClicked();      // 煎制：生肉饼 → 肉饼
-    void onDiscardClicked();    // 丢弃：清空盘子
-    void onSubmitClicked();     // 提交订单并判分
-    void onMenuClicked();       // 打开暂停菜单
+    void onGrillClicked();
+    void onDiscardClicked();
+    void onSubmitClicked();
+    void onMenuClicked();
 
     // ---- 计时器 ----
-    void updateTimer();         // 每秒更新倒计时
+    void updateTimer();
+    void onGrillTimerTick();
 
     // ---- 暂停菜单回调 ----
-    void onContinueGame();      // 继续游戏
-    void onRestartGame();       // 重新开始本局
-    void onBackToLobby();       // 返回主菜单
+    void onContinueGame();
+    void onRestartGame();
+    void onBackToLobby();
 
 private:
-    void updatePlateDisplay();              // 刷新盘子上的食材显示
-    void generateNewOrder();                // 生成新订单（当前为固定蟹黄堡）
-    void endGame();                         // 时间到，结算并返回大厅
-    void showStarRating();                  // 弹出星级评价对话框
-    void showFeedback(const QString &message, const QString &color);  // 顶部反馈提示
+    void updatePlateDisplay();
+    void generateNewOrder();
+    void endGame();
+    void showStarRating();
+    void showFeedback(const QString &message, const QString &color);
+    int initialTimeForDifficulty() const;
+    void addIngredient(const QString &name);
+    bool startGrilling();
+    bool hasInvalidIngredients() const;
+    void resetGrillTimer();
+    QStringList plateOrderNames() const;
 
-    // ---- 游戏状态数据 ----
-    bool isPaused;              // 是否暂停
-    int comboCount;             // 当前连击数
-    int maxScore;               // 历史最高分
-    int orderSerial;            // 当前订单序号
-    int score;                  // 本局得分
-    int completedOrders;        // 本局完成订单数
-    int timeLeft;               // 剩余秒数
+    GameDifficulty difficulty;
+    bool isPaused;
+    int comboCount;
+    int maxScore;
+    int orderSerial;
+    int score;
+    int completedOrders;
+    int timeLeft;
 
-    QStringList currentIngredients;  // 盘子里的食材
-    QStringList currentOrder;        // 当前订单要求的食材
+    QVector<PlateItem> currentIngredients;
+    QStringList currentOrder;
 
-    // ---- UI 控件 ----
     QPushButton *bottomBunBtn;
     QPushButton *rawPattyBtn;
     QPushButton *topBunBtn;
     QPushButton *lettuceBtn;
     QPushButton *tomatoBtn;
+    QPushButton *rawFriesBtn;
+    QPushButton *colaBtn;
+    QWidget *hardIngredientRow;
     QPushButton *grillBtn;
     QPushButton *discardBtn;
     QPushButton *submitBtn;
     QPushButton *menuBtn;
 
-    QLabel *plateLabel;         // 盘子显示
-    QLabel *timerLabel;         // 倒计时
-    QLabel *scoreLabel;         // 得分
-    QLabel *serialLabel;        // 订单序号
-    QLabel *orderLabel;         // 订单内容
-    QLabel *feedbackLabel;      // 操作反馈
-    QLabel *maxScoreLabel;      // 最高纪录
+    QLabel *plateLabel;
+    QLabel *timerLabel;
+    QLabel *scoreLabel;
+    QLabel *serialLabel;
+    QLabel *orderLabel;
+    QLabel *feedbackLabel;
+    QLabel *maxScoreLabel;
 
-    QTimer *timer;              // 1 秒定时器
+    QTimer *timer;
+    QTimer *grillTimer;
+    QTimer *feedbackTimer;
 };
 
 #endif

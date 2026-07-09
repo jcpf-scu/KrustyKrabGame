@@ -21,14 +21,14 @@ public:
     ~MainWindow();
 
 private slots:
-    void onStartClicked();   // 开始游戏 → 进入 GameWindow
-    void onIntroClicked();   // 打开游戏说明窗口
-    void onExitClicked();    // 退出程序
+    void onStartClicked();      // 开始游戏 → 进入难度选择
+    void onIntroClicked();      // 打开游戏说明窗口
+    void onExitClicked();       // 退出程序
 
 private:
-    QPushButton *startBtn;   // 开始游戏按钮
-    QPushButton *introBtn;   // 游戏说明按钮
-    QPushButton *exitBtn;    // 退出游戏按钮
+    QPushButton *startBtn;      // 开始游戏按钮（进入难度选择）
+    QPushButton *introBtn;      // 游戏说明按钮
+    QPushButton *exitBtn;       // 退出游戏按钮
 };
 
 #endif

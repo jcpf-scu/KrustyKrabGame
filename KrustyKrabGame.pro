@@ -22,14 +22,16 @@ SOURCES += \
     mainwindow.cpp \
     gamewindow.cpp \
     menuwindow.cpp \
-    introwindow.cpp
+    introwindow.cpp \
+    difficultywindow.cpp
 
 # Header files
 HEADERS += \
     mainwindow.h \
     gamewindow.h \
     menuwindow.h \
-    introwindow.h
+    introwindow.h \
+    difficultywindow.h
 
 RESOURCES += \
     images.qrc

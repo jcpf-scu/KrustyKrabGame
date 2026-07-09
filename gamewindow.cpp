@@ -1,6 +1,6 @@
 /**
  * @file gamewindow.cpp
- * @brief 游戏主窗口实现：简单模式（60 秒计时 + 固定蟹黄堡订单）
+ * @brief 游戏主窗口实现
  */
 
 #include "gamewindow.h"
@@ -15,21 +15,18 @@
 #include <QTime>
 #include <QPixmap>
 
-// 食材按钮统一样式
 static const char *BTN_STYLE =
     "QPushButton { background-color: #FFD166; color: #1D3557;"
     "font-size: 20px; font-weight: bold; border-radius: 8px;"
     "font-family: 'Microsoft YaHei', sans-serif; padding: 10px; }"
     "QPushButton:hover { background-color: #FFC145; }";
 
-// 主要操作按钮样式（提交、菜单）
 static const char *ACTION_STYLE =
     "QPushButton { background-color: #E63946; color: white;"
     "font-size: 20px; font-weight: bold; border-radius: 8px;"
     "font-family: 'Microsoft YaHei', sans-serif; padding: 10px; }"
     "QPushButton:hover { background-color: #C1121F; }";
 
-// 背景图上的可读文字样式（半透明深色底 + 高对比文字）
 static const char *INFO_PANEL_STYLE =
     "font-size: 25px; font-weight: bold; color: #FFFFFF;"
     "background-color: rgba(29, 53, 87, 220);"
@@ -61,36 +58,73 @@ static const char *MAX_SCORE_PANEL_STYLE =
     "background-color: rgba(29, 53, 87, 210);"
     "border-radius: 10px; padding: 8px 16px;";
 
-GameWindow::GameWindow(QWidget *parent)
+QString PlateItem::displayName() const
+{
+    if (name == "肉饼" && grillElapsed >= 0) {
+        if (grillElapsed < 3) return "煎制中·肉饼";
+        if (grillElapsed < 7) return "肉饼";
+        return "糊肉饼";
+    }
+    if (name == "薯条" && grillElapsed >= 0) {
+        if (grillElapsed < 3) return "煎制中·薯条";
+        if (grillElapsed < 7) return "薯条";
+        return "糊薯条";
+    }
+    return name;
+}
+
+QString PlateItem::orderName() const
+{
+    const QString shown = displayName();
+    if (shown.startsWith("煎制中") || shown.startsWith("糊")
+        || shown == "生肉饼" || shown == "生薯条") {
+        return QString();
+    }
+    return shown;
+}
+
+GameWindow::GameWindow(GameDifficulty difficulty, QWidget *parent)
     : QMainWindow(parent)
+    , difficulty(difficulty)
     , isPaused(false)
     , comboCount(0)
     , maxScore(0)
     , orderSerial(1)
     , score(0)
     , completedOrders(0)
-    , timeLeft(60)   // 简单模式：60 秒倒计时
+    , timeLeft(initialTimeForDifficulty())
+    , rawFriesBtn(nullptr)
+    , colaBtn(nullptr)
+    , hardIngredientRow(nullptr)
+    , grillTimer(nullptr)
 {
     setFixedSize(1125, 812);
-    setWindowTitle("蟹堡王 - 制作蟹黄堡");
+    setWindowTitle(difficulty == GameDifficulty::Hard
+        ? "蟹堡王 - 制作蟹黄堡（困难）"
+        : "蟹堡王 - 制作蟹黄堡（简单）");
 
-    // ========= 背景层 =========
+    const char *bgPath = difficulty == GameDifficulty::Hard
+        ? ":/images/game_hard_bg.jpg" : ":/images/game_bg.jpg";
+    const char *bgFallback = difficulty == GameDifficulty::Hard
+        ? "images/game_hard_bg.jpg" : "images/game_bg.jpg";
+
     QLabel *bgLabel = new QLabel(this);
     bgLabel->setGeometry(0, 0, 1125, 812);
     bgLabel->setScaledContents(true);
-    QPixmap bgPixmap(":/images/game_bg.jpg");
+    QPixmap bgPixmap(bgPath);
     if (bgPixmap.isNull()) {
-        bgPixmap.load("images/game_bg.jpg");
+        bgPixmap.load(bgFallback);
     }
     if (!bgPixmap.isNull()) {
         bgLabel->setPixmap(bgPixmap.scaled(bgLabel->size(),
                                            Qt::KeepAspectRatioByExpanding,
-                                           Qt::SmoothTransformation));
+                                           Qt::FastTransformation));
+        bgLabel->setAttribute(Qt::WA_StaticContents, true);
+        bgLabel->setAttribute(Qt::WA_OpaquePaintEvent, true);
     } else {
         bgLabel->setStyleSheet("background-color: #F1FAEE;");
     }
 
-    // 读取本地保存的最高分
     QFile file("maxscore.dat");
     if (file.open(QIODevice::ReadOnly)) {
         QDataStream in(&file);
@@ -98,7 +132,6 @@ GameWindow::GameWindow(QWidget *parent)
         file.close();
     }
 
-    // ========= 搭建界面布局 =========
     QWidget *central = new QWidget(this);
     central->setStyleSheet("background: transparent;");
     setCentralWidget(central);
@@ -106,7 +139,6 @@ GameWindow::GameWindow(QWidget *parent)
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(25, 19, 25, 19);
 
-    // ---- 顶部信息栏：序号 | 订单 | 倒计时 | 菜单 ----
     QHBoxLayout *topBar = new QHBoxLayout();
     serialLabel = new QLabel("第 1 单", this);
     serialLabel->setStyleSheet(ACCENT_PANEL_STYLE);
@@ -115,7 +147,11 @@ GameWindow::GameWindow(QWidget *parent)
     orderLabel->setStyleSheet(INFO_PANEL_STYLE);
     orderLabel->setAlignment(Qt::AlignCenter);
 
-    timerLabel = new QLabel("01:00", this);
+    timerLabel = new QLabel(
+        QString("%1:%2")
+            .arg(initialTimeForDifficulty() / 60, 2, 10, QChar('0'))
+            .arg(initialTimeForDifficulty() % 60, 2, 10, QChar('0')),
+        this);
     timerLabel->setStyleSheet(TIMER_STYLE);
     timerLabel->setAlignment(Qt::AlignRight);
 
@@ -129,14 +165,19 @@ GameWindow::GameWindow(QWidget *parent)
     topBar->addWidget(menuBtn);
     mainLayout->addLayout(topBar);
 
-    // 操作反馈提示（成功/失败/连击等，有内容时才显示）
     feedbackLabel = new QLabel(this);
     feedbackLabel->setAlignment(Qt::AlignCenter);
     feedbackLabel->setFixedHeight(38);
     feedbackLabel->hide();
     mainLayout->addWidget(feedbackLabel);
 
-    // ---- 食材按钮区 ----
+    feedbackTimer = new QTimer(this);
+    feedbackTimer->setSingleShot(true);
+    connect(feedbackTimer, &QTimer::timeout, this, [this]() {
+        feedbackLabel->clear();
+        feedbackLabel->hide();
+    });
+
     QLabel *ingredientTitle = new QLabel("食材区", this);
     ingredientTitle->setStyleSheet(SECTION_TITLE_STYLE);
     mainLayout->addWidget(ingredientTitle);
@@ -145,18 +186,32 @@ GameWindow::GameWindow(QWidget *parent)
     bottomBunBtn = new QPushButton("底面包", this);
     rawPattyBtn = new QPushButton("生肉饼", this);
     topBunBtn = new QPushButton("顶面包", this);
-    lettuceBtn = new QPushButton("生菜",this);
-    tomatoBtn= new QPushButton("番茄",this);
-    for (QPushButton *btn : {bottomBunBtn, rawPattyBtn,lettuceBtn,tomatoBtn, topBunBtn}) {
+    lettuceBtn = new QPushButton("生菜", this);
+    tomatoBtn = new QPushButton("番茄", this);
+    for (QPushButton *btn : {bottomBunBtn, rawPattyBtn, lettuceBtn, tomatoBtn, topBunBtn}) {
         btn->setFixedHeight(63);
         btn->setStyleSheet(BTN_STYLE);
         ingredientRow->addWidget(btn);
     }
     mainLayout->addLayout(ingredientRow);
 
-    mainLayout->addSpacing(55);
+    if (difficulty == GameDifficulty::Hard) {
+        hardIngredientRow = new QWidget(this);
+        QHBoxLayout *hardRow = new QHBoxLayout(hardIngredientRow);
+        hardRow->setContentsMargins(0, 0, 0, 0);
+        rawFriesBtn = new QPushButton("生薯条", this);
+        colaBtn = new QPushButton("可乐", this);
+        for (QPushButton *btn : {rawFriesBtn, colaBtn}) {
+            btn->setFixedHeight(63);
+            btn->setStyleSheet(BTN_STYLE);
+            hardRow->addWidget(btn);
+        }
+        hardRow->addStretch();
+        mainLayout->addWidget(hardIngredientRow);
+    }
 
-    // ---- 盘子显示区 ----
+    mainLayout->addSpacing(difficulty == GameDifficulty::Hard ? 35 : 55);
+
     plateLabel = new QLabel("盘子：空", this);
     plateLabel->setAlignment(Qt::AlignCenter);
     plateLabel->setMinimumHeight(150);
@@ -167,15 +222,15 @@ GameWindow::GameWindow(QWidget *parent)
     );
     mainLayout->addWidget(plateLabel);
 
-    // ---- 操作按钮区 ----
     QLabel *actionTitle = new QLabel("操作区", this);
     actionTitle->setStyleSheet(SECTION_TITLE_STYLE);
     mainLayout->addWidget(actionTitle);
 
     QHBoxLayout *actionRow = new QHBoxLayout();
-    grillBtn   = new QPushButton("煎制", this);
+    grillBtn = new QPushButton(
+        difficulty == GameDifficulty::Hard ? "煎制(3秒)" : "煎制", this);
     discardBtn = new QPushButton("丢弃", this);
-    submitBtn  = new QPushButton("提交订单", this);
+    submitBtn = new QPushButton("提交订单", this);
     grillBtn->setFixedHeight(63);
     discardBtn->setFixedHeight(63);
     submitBtn->setFixedHeight(63);
@@ -193,7 +248,6 @@ GameWindow::GameWindow(QWidget *parent)
 
     mainLayout->addStretch();
 
-    // ---- 底部分数栏 ----
     QHBoxLayout *bottomBar = new QHBoxLayout();
     scoreLabel = new QLabel("本局累计金币：0", this);
     scoreLabel->setStyleSheet(SCORE_PANEL_STYLE);
@@ -204,12 +258,15 @@ GameWindow::GameWindow(QWidget *parent)
     bottomBar->addWidget(maxScoreLabel, 1);
     mainLayout->addLayout(bottomBar);
 
-    // ========= 信号槽连接 =========
     connect(bottomBunBtn, &QPushButton::clicked, this, &GameWindow::onBottomBunClicked);
     connect(rawPattyBtn,  &QPushButton::clicked, this, &GameWindow::onRawPattyClicked);
     connect(topBunBtn,    &QPushButton::clicked, this, &GameWindow::onTopBunClicked);
     connect(tomatoBtn,    &QPushButton::clicked, this, &GameWindow::onTomatoClicked);
-    connect(lettuceBtn,    &QPushButton::clicked, this, &GameWindow::onLettuceClicked);
+    connect(lettuceBtn,   &QPushButton::clicked, this, &GameWindow::onLettuceClicked);
+    if (rawFriesBtn) {
+        connect(rawFriesBtn, &QPushButton::clicked, this, &GameWindow::onRawFriesClicked);
+        connect(colaBtn,     &QPushButton::clicked, this, &GameWindow::onColaClicked);
+    }
     connect(grillBtn,     &QPushButton::clicked, this, &GameWindow::onGrillClicked);
     connect(discardBtn,   &QPushButton::clicked, this, &GameWindow::onDiscardClicked);
     connect(submitBtn,    &QPushButton::clicked, this, &GameWindow::onSubmitClicked);
@@ -217,75 +274,164 @@ GameWindow::GameWindow(QWidget *parent)
 
     bgLabel->lower();
 
-    // 生成第一单订单，启动倒计时
     generateNewOrder();
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GameWindow::updateTimer);
-    timer->start(1000);  // 每 1000 毫秒（1 秒）触发一次
+    timer->start(1000);
+
+    if (difficulty == GameDifficulty::Hard) {
+        grillTimer = new QTimer(this);
+        connect(grillTimer, &QTimer::timeout, this, &GameWindow::onGrillTimerTick);
+    }
 }
 
 GameWindow::~GameWindow() {}
 
-// ========== 食材操作 ==========
-
-void GameWindow::onBottomBunClicked()
+void GameWindow::addIngredient(const QString &name)
 {
-    currentIngredients.append("底面包");
+    PlateItem item;
+    item.name = name;
+    item.grillElapsed = -1;
+    currentIngredients.append(item);
     updatePlateDisplay();
 }
 
-void GameWindow::onRawPattyClicked()
+void GameWindow::onBottomBunClicked() { addIngredient("底面包"); }
+void GameWindow::onRawPattyClicked()  { addIngredient("生肉饼"); }
+void GameWindow::onTopBunClicked()    { addIngredient("顶面包"); }
+void GameWindow::onLettuceClicked()   { addIngredient("生菜"); }
+void GameWindow::onTomatoClicked()    { addIngredient("番茄"); }
+void GameWindow::onRawFriesClicked()  { addIngredient("生薯条"); }
+void GameWindow::onColaClicked()      { addIngredient("可乐"); }
+
+bool GameWindow::startGrilling()
 {
-    currentIngredients.append("生肉饼");
-    updatePlateDisplay();
+    bool started = false;
+    for (PlateItem &item : currentIngredients) {
+        if (item.name == "生肉饼") {
+            item.name = "肉饼";
+            item.grillElapsed = 0;
+            started = true;
+        } else if (item.name == "生薯条") {
+            item.name = "薯条";
+            item.grillElapsed = 0;
+            started = true;
+        }
+    }
+    if (started && grillTimer && !grillTimer->isActive()) {
+        grillTimer->start(1000);
+    }
+    return started;
 }
 
-void GameWindow::onTopBunClicked()
-{
-    currentIngredients.append("顶面包");
-    updatePlateDisplay();
-}
-void GameWindow::onLettuceClicked()
-{
-    currentIngredients.append("生菜");
-    updatePlateDisplay();
-}
-void GameWindow::onTomatoClicked()
-{
-    currentIngredients.append("番茄");
-    updatePlateDisplay();
-}
-
-// 煎制：将盘子里的「生肉饼」变成「肉饼」（类似参考项目的搅拌功能）
 void GameWindow::onGrillClicked()
 {
-    if (currentIngredients.contains("生肉饼")) {
-        currentIngredients.removeAll("生肉饼");
-        currentIngredients.append("肉饼");
+    if (difficulty == GameDifficulty::Easy) {
+        bool found = false;
+        for (int i = 0; i < currentIngredients.size(); ++i) {
+            if (currentIngredients[i].name == "生肉饼") {
+                currentIngredients[i].name = "肉饼";
+                currentIngredients[i].grillElapsed = -1;
+                found = true;
+            }
+        }
+        if (found) {
+            updatePlateDisplay();
+            showFeedback("煎制成功！生肉饼 → 肉饼", "#2A9D8F");
+        } else {
+            showFeedback("盘子里没有生肉饼，无法煎制", "#E63946");
+        }
+        return;
+    }
+
+    if (startGrilling()) {
         updatePlateDisplay();
-        showFeedback("煎制成功！生肉饼 → 肉饼", "#2A9D8F");
+        showFeedback("开始煎制！3 秒后完成，再 4 秒后会煎糊", "#2A9D8F");
     } else {
-        showFeedback("盘子里没有生肉饼，无法煎制", "#E63946");
+        showFeedback("盘子里没有生肉饼或生薯条，无法煎制", "#E63946");
     }
 }
 
-// 丢弃：清空盘子，订单不变，可重新制作
+void GameWindow::onGrillTimerTick()
+{
+    if (isPaused) return;
+
+    bool keepTimer = false;
+    for (PlateItem &item : currentIngredients) {
+        if (item.grillElapsed < 0 || item.grillElapsed >= 7) {
+            continue;
+        }
+
+        item.grillElapsed++;
+        if (item.grillElapsed == 7) {
+            showFeedback(
+                item.name == "肉饼" ? "肉饼煎糊了！请丢弃" : "薯条煎糊了！请丢弃",
+                "#E63946");
+        } else {
+            keepTimer = true;
+        }
+    }
+
+    updatePlateDisplay();
+    if (!keepTimer) {
+        resetGrillTimer();
+    }
+}
+
+void GameWindow::resetGrillTimer()
+{
+    if (grillTimer) {
+        grillTimer->stop();
+    }
+}
+
+bool GameWindow::hasInvalidIngredients() const
+{
+    for (const PlateItem &item : currentIngredients) {
+        const QString shown = item.displayName();
+        if (shown.startsWith("煎制中") || shown.startsWith("糊")
+            || shown == "生肉饼" || shown == "生薯条") {
+            return true;
+        }
+    }
+    return false;
+}
+
+QStringList GameWindow::plateOrderNames() const
+{
+    QStringList names;
+    for (const PlateItem &item : currentIngredients) {
+        const QString n = item.orderName();
+        if (!n.isEmpty()) {
+            names.append(n);
+        }
+    }
+    return names;
+}
+
 void GameWindow::onDiscardClicked()
 {
     currentIngredients.clear();
+    resetGrillTimer();
     updatePlateDisplay();
     showFeedback("已清空盘子", "#6C757D");
 }
 
-// ========== 提交订单与判分 ==========
-
 void GameWindow::onSubmitClicked()
 {
-    // 检查食材种类和数量是否与订单一致
-    bool match = (currentIngredients.size() == currentOrder.size());
+    if (hasInvalidIngredients()) {
+        score -= 5;
+        comboCount = 0;
+        scoreLabel->setText("得分：" + QString::number(score));
+        showFeedback("有未煎好或煎糊的食材！无法提交，请丢弃重做", "#E63946");
+        return;
+    }
+
+    const QStringList plateNames = plateOrderNames();
+    bool match = (plateNames.size() == currentOrder.size());
     if (match) {
         for (const QString &need : currentOrder) {
-            if (!currentIngredients.contains(need)) {
+            if (!plateNames.contains(need)) {
                 match = false;
                 break;
             }
@@ -293,7 +439,6 @@ void GameWindow::onSubmitClicked()
     }
 
     if (match) {
-        // 正确：加分 + 连击奖励
         score += 10;
         comboCount++;
         if (comboCount >= 5) {
@@ -307,58 +452,66 @@ void GameWindow::onSubmitClicked()
         }
         completedOrders++;
         currentIngredients.clear();
+        resetGrillTimer();
         updatePlateDisplay();
         generateNewOrder();
         orderSerial++;
         serialLabel->setText(QString("第 %1 单").arg(orderSerial));
         scoreLabel->setText("得分：" + QString::number(score));
     } else {
-        // 错误：扣分，连击清零，订单不变
         score -= 5;
         comboCount = 0;
         scoreLabel->setText("得分：" + QString::number(score));
         showFeedback("订单错误！消耗原材料-5金币，请重新制作", "#E63946");
         currentIngredients.clear();
+        resetGrillTimer();
         updatePlateDisplay();
     }
 }
 
-// ========== 订单与显示 ==========
-
-// 简单模式：
 void GameWindow::generateNewOrder()
 {
     currentOrder.clear();
-    QStringList order0={"底面包","肉饼","顶面包"};
-    QStringList order1={"底面包","生菜","肉饼","顶面包"};
-    QStringList order2={"底面包","生菜","肉饼","番茄","顶面包"};
-    //生成0~2的随机数
+    QStringList order0 = {"底面包", "肉饼", "顶面包"};
+    QStringList order1 = {"底面包", "生菜", "肉饼", "顶面包"};
+    QStringList order2 = {"底面包", "生菜", "肉饼", "番茄", "顶面包"};
+    QStringList order3 = {"薯条", "可乐"};
+    QStringList order4 = {"底面包", "肉饼", "顶面包", "薯条", "可乐"};
+    QStringList order5 = {"底面包", "生菜", "肉饼", "顶面包", "薯条", "可乐"};
+
     qsrand(QTime::currentTime().msec());
-    int r = qrand()%3;
-    if(r==0){
-        currentOrder=order0;
-    }else if(r==1){
-        currentOrder=order1;
-    }else if(r==2){
-        currentOrder=order2;
+    if (difficulty == GameDifficulty::Hard) {
+        QStringList orders[] = {order1, order2, order3, order4, order5};
+        currentOrder = orders[qrand() % 5];
+    } else {
+        int r = qrand() % 3;
+        if (r == 0)      currentOrder = order0;
+        else if (r == 1) currentOrder = order1;
+        else             currentOrder = order2;
     }
     orderLabel->setText("订单：" + currentOrder.join(" + "));
 }
 
 void GameWindow::updatePlateDisplay()
 {
+    QString text;
     if (currentIngredients.isEmpty()) {
-        plateLabel->setText("盘子：空");
+        text = "盘子：空";
     } else {
-        plateLabel->setText("盘子：" + currentIngredients.join(" + "));
+        QStringList shown;
+        for (const PlateItem &item : currentIngredients) {
+            shown.append(item.displayName());
+        }
+        text = "盘子：" + shown.join(" + ");
+    }
+    if (plateLabel->text() != text) {
+        plateLabel->setText(text);
     }
 }
 
-// ========== 计时与结算 ==========
-
 void GameWindow::updateTimer()
 {
-    if (isPaused) return;  // 暂停时不倒计时
+    if (isPaused) return;
 
     timeLeft--;
     int minutes = timeLeft / 60;
@@ -369,13 +522,13 @@ void GameWindow::updateTimer()
 
     if (timeLeft <= 0) {
         timer->stop();
+        resetGrillTimer();
         endGame();
     }
 }
 
 void GameWindow::endGame()
 {
-    // 刷新最高分并保存到本地文件
     if (score > maxScore) {
         maxScore = score;
         maxScoreLabel->setText("最高纪录：" + QString::number(maxScore));
@@ -392,7 +545,6 @@ void GameWindow::endGame()
     mainWin->show();
 }
 
-// 根据完成订单数评定 1~3 星
 void GameWindow::showStarRating()
 {
     int star = 0;
@@ -411,22 +563,33 @@ void GameWindow::showStarRating()
         .arg(completedOrders).arg(score).arg(maxScore).arg(starMsg));
 }
 
-// 顶部短暂显示操作反馈，2 秒后自动清除
 void GameWindow::showFeedback(const QString &message, const QString &color)
 {
-    feedbackLabel->setText(message);
-    feedbackLabel->setStyleSheet(
-        QString("font-size: 22px; font-weight: bold; color: %1;"
-                "background-color: rgba(29, 53, 87, 220);"
-                "border-radius: 8px; padding: 4px 12px;").arg(color));
-    feedbackLabel->show();
-    QTimer::singleShot(2000, feedbackLabel, [this]() {
-        feedbackLabel->clear();
-        feedbackLabel->hide();
-    });
-}
+    static const char *STYLE_GREEN =
+        "font-size: 22px; font-weight: bold; color: #2A9D8F;"
+        "background-color: rgba(29, 53, 87, 220);"
+        "border-radius: 8px; padding: 4px 12px;";
+    static const char *STYLE_RED =
+        "font-size: 22px; font-weight: bold; color: #E63946;"
+        "background-color: rgba(29, 53, 87, 220);"
+        "border-radius: 8px; padding: 4px 12px;";
+    static const char *STYLE_ORANGE =
+        "font-size: 22px; font-weight: bold; color: #F4A261;"
+        "background-color: rgba(29, 53, 87, 220);"
+        "border-radius: 8px; padding: 4px 12px;";
+    static const char *STYLE_GRAY =
+        "font-size: 22px; font-weight: bold; color: #6C757D;"
+        "background-color: rgba(29, 53, 87, 220);"
+        "border-radius: 8px; padding: 4px 12px;";
 
-// ========== 暂停菜单 ==========
+    feedbackLabel->setText(message);
+    if (color == "#2A9D8F")      feedbackLabel->setStyleSheet(STYLE_GREEN);
+    else if (color == "#E63946") feedbackLabel->setStyleSheet(STYLE_RED);
+    else if (color == "#F4A261") feedbackLabel->setStyleSheet(STYLE_ORANGE);
+    else                         feedbackLabel->setStyleSheet(STYLE_GRAY);
+    feedbackLabel->show();
+    feedbackTimer->start(2000);
+}
 
 void GameWindow::onMenuClicked()
 {
@@ -445,22 +608,33 @@ void GameWindow::onContinueGame()
 {
     isPaused = false;
     timer->start(1000);
+    if (grillTimer) {
+        for (const PlateItem &item : currentIngredients) {
+            if (item.grillElapsed >= 0 && item.grillElapsed < 7) {
+                grillTimer->start(1000);
+                break;
+            }
+        }
+    }
 }
 
-// 重置本局所有数据，重新开始 60 秒挑战
 void GameWindow::onRestartGame()
 {
     isPaused = false;
     score = 0;
     comboCount = 0;
     completedOrders = 0;
-    timeLeft = 60;
+    timeLeft = initialTimeForDifficulty();
     orderSerial = 1;
     currentIngredients.clear();
+    resetGrillTimer();
 
     scoreLabel->setText("积累金币：0");
     serialLabel->setText("第 1 单");
-    timerLabel->setText("01:00");
+    timerLabel->setText(
+        QString("%1:%2")
+            .arg(timeLeft / 60, 2, 10, QChar('0'))
+            .arg(timeLeft % 60, 2, 10, QChar('0')));
     feedbackLabel->hide();
     updatePlateDisplay();
     generateNewOrder();
@@ -470,7 +644,13 @@ void GameWindow::onRestartGame()
 
 void GameWindow::onBackToLobby()
 {
+    resetGrillTimer();
     close();
     MainWindow *mainWin = new MainWindow();
     mainWin->show();
+}
+
+int GameWindow::initialTimeForDifficulty() const
+{
+    return 60;
 }
