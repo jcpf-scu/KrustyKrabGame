@@ -3,5 +3,9 @@
         <file>images/start_bg.jpg</file>
         <file>images/title_logo.png</file>
         <file>images/game_bg.jpg</file>
+        <file>images/di-hard.png</file>
+        <file>images/di-return.png</file>
+        <file>images/di-simple.png</file>
+        <file>images/bg-difficult.png</file>
     </qresource>
 </RCC>

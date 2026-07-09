@@ -34,7 +34,7 @@ class GameWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit GameWindow(bool advancedMode = false, QWidget *parent = nullptr);
+    explicit GameWindow(bool advancedMode = false , QWidget *parent = nullptr);
     ~GameWindow();
 
 private slots:

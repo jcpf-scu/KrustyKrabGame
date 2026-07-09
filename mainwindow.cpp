@@ -1,7 +1,7 @@
 /**
  * @brief 主菜单界面实现
  */
-
+#include "difficultywindow.h"
 #include "mainwindow.h"
 #include "gamewindow.h"
 #include "introwindow.h"
@@ -97,8 +97,8 @@ MainWindow::~MainWindow() {}
 // 点击「开始游戏」：打开游戏窗口，关闭当前大厅
 void MainWindow::onStartClicked()
 {
-    GameWindow *game = new GameWindow();
-    game->show();
+    DifficultyWindow *dif = new DifficultyWindow();
+    dif->show();
     close();
 }
 

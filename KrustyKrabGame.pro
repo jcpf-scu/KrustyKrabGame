@@ -20,18 +20,18 @@ CONFIG += c++11
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    gamewindow.cpp \
     menuwindow.cpp \
     introwindow.cpp \
-    difficultywindow.cpp
+    difficultywindow.cpp \
+    gamewindow.cpp
 
 # Header files
 HEADERS += \
     mainwindow.h \
-    gamewindow.h \
     menuwindow.h \
     introwindow.h \
-    difficultywindow.h
+    difficultywindow.h \
+    gamewindow.h
 
 RESOURCES += \
     images.qrc

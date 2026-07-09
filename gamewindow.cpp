@@ -61,9 +61,9 @@ static const char *MAX_SCORE_PANEL_STYLE =
     "background-color: rgba(29, 53, 87, 210);"
     "border-radius: 10px; padding: 8px 16px;";
 
-GameWindow::GameWindow(bool advancedMode ,QWidget *parent)
+GameWindow::GameWindow(bool advancedMode,QWidget *parent)
     : QMainWindow(parent)
-    , isAdvancedMode(advancedMode)
+    ,isAdvancedMode(advancedMode)
     , isPaused(false)
     , comboCount(0)
     , maxScore(0)
@@ -149,7 +149,7 @@ GameWindow::GameWindow(bool advancedMode ,QWidget *parent)
     lettuceBtn = new QPushButton("生菜",this);
     tomatoBtn= new QPushButton("番茄",this);
 
-    if(isAdvancedMode){//isAdvancedMode
+    if(isAdvancedMode){
         friesBtn = new QPushButton("薯条", this);
         colaBtn = new QPushButton("可乐", this);
         for (QPushButton *btn : {friesBtn,colaBtn,bottomBunBtn, rawPattyBtn,lettuceBtn,tomatoBtn, topBunBtn}) {
@@ -159,8 +159,6 @@ GameWindow::GameWindow(bool advancedMode ,QWidget *parent)
         }
     }
     else{
-        friesBtn = nullptr;
-        colaBtn = nullptr;
         for (QPushButton *btn : {bottomBunBtn, rawPattyBtn,lettuceBtn,tomatoBtn, topBunBtn}) {
             btn->setFixedHeight(63);
             btn->setStyleSheet(BTN_STYLE);
@@ -227,14 +225,14 @@ GameWindow::GameWindow(bool advancedMode ,QWidget *parent)
     connect(topBunBtn,    &QPushButton::clicked, this, &GameWindow::onTopBunClicked);
     connect(tomatoBtn,    &QPushButton::clicked, this, &GameWindow::onTomatoClicked);
     connect(lettuceBtn,    &QPushButton::clicked, this, &GameWindow::onLettuceClicked);
+    connect(colaBtn,  &QPushButton::clicked, this , &GameWindow::onColaClicked);
+    connect(friesBtn,  &QPushButton::clicked, this , &GameWindow::onFriesClicked);
     connect(grillBtn,     &QPushButton::clicked, this, &GameWindow::onGrillClicked);
     connect(discardBtn,   &QPushButton::clicked, this, &GameWindow::onDiscardClicked);
     connect(submitBtn,    &QPushButton::clicked, this, &GameWindow::onSubmitClicked);
     connect(menuBtn,      &QPushButton::clicked, this, &GameWindow::onMenuClicked);
-    if (isAdvancedMode) {
-        connect(colaBtn, &QPushButton::clicked, this, &GameWindow::onColaClicked);
-        connect(friesBtn, &QPushButton::clicked, this, &GameWindow::onFriesClicked);
-    }
+    connect(timer,       &QTimer::timeout, this, &GameWindow::updateTimer);
+
 
     bgLabel->lower();
 
