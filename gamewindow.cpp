@@ -63,7 +63,6 @@ static const char *MAX_SCORE_PANEL_STYLE =
 
 GameWindow::GameWindow(bool advancedMode,QWidget *parent)
     : QMainWindow(parent)
-    ,isAdvancedMode(advancedMode)
     , isPaused(false)
     , comboCount(0)
     , maxScore(0)
@@ -71,17 +70,28 @@ GameWindow::GameWindow(bool advancedMode,QWidget *parent)
     , score(0)
     , completedOrders(0)
     , timeLeft(60)   // 简单模式：60 秒倒计时
+    , timer(nullptr)
+    , isAdvancedMode(advancedMode)
 {
     setFixedSize(1125, 812);
     setWindowTitle("蟹堡王 - 制作蟹黄堡");
+    friesBtn = nullptr;
+    colaBtn = nullptr;
+    timer = new QTimer(this);
 
     // ========= 背景层 =========
     QLabel *bgLabel = new QLabel(this);
     bgLabel->setGeometry(0, 0, 1125, 812);
     bgLabel->setScaledContents(true);
-    QPixmap bgPixmap(":/images/game_bg.jpg");
+    const QString bgResourcePath = isAdvancedMode
+        ? ":/images/game_hard_bg.jpg"
+        : ":/images/game_bg.jpg";
+    QPixmap bgPixmap(bgResourcePath);
     if (bgPixmap.isNull()) {
-        bgPixmap.load("images/game_bg.jpg");
+        const QString bgFilePath = isAdvancedMode
+            ? "images/game_hard_bg.jpg"
+            : "images/game_bg.jpg";
+        bgPixmap.load(bgFilePath);
     }
     if (!bgPixmap.isNull()) {
         bgLabel->setPixmap(bgPixmap.scaled(bgLabel->size(),
@@ -225,21 +235,21 @@ GameWindow::GameWindow(bool advancedMode,QWidget *parent)
     connect(topBunBtn,    &QPushButton::clicked, this, &GameWindow::onTopBunClicked);
     connect(tomatoBtn,    &QPushButton::clicked, this, &GameWindow::onTomatoClicked);
     connect(lettuceBtn,    &QPushButton::clicked, this, &GameWindow::onLettuceClicked);
-    connect(colaBtn,  &QPushButton::clicked, this , &GameWindow::onColaClicked);
-    connect(friesBtn,  &QPushButton::clicked, this , &GameWindow::onFriesClicked);
+    if (isAdvancedMode) {
+        connect(colaBtn,  &QPushButton::clicked, this, &GameWindow::onColaClicked);
+        connect(friesBtn, &QPushButton::clicked, this, &GameWindow::onFriesClicked);
+    }
     connect(grillBtn,     &QPushButton::clicked, this, &GameWindow::onGrillClicked);
     connect(discardBtn,   &QPushButton::clicked, this, &GameWindow::onDiscardClicked);
     connect(submitBtn,    &QPushButton::clicked, this, &GameWindow::onSubmitClicked);
     connect(menuBtn,      &QPushButton::clicked, this, &GameWindow::onMenuClicked);
-    connect(timer,       &QTimer::timeout, this, &GameWindow::updateTimer);
+    connect(timer,        &QTimer::timeout, this, &GameWindow::updateTimer);
 
 
     bgLabel->lower();
 
     // 生成第一单订单，启动倒计时
     generateNewOrder();
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &GameWindow::updateTimer);
     connect(timer,        &QTimer::timeout, this, &GameWindow::updateIngredientTimers);
     timer->start(1000);  // 每 1000 毫秒（1 秒）触发一次
 }
@@ -375,14 +385,14 @@ void GameWindow::onDiscardClicked()
 
 void GameWindow::onSubmitClicked()
 {
-    // 检查食材种类和数量是否与订单一致
-    bool match = true;
+    // 检查食材种类和数量是否与订单完全一致（不允许多放）
+    bool match = (currentIngredients.size() == currentOrder.size());
     QStringList plateNames;
     for (const IngredientItem &item : currentIngredients) {
         plateNames << item.name;
     }
     for (const QString &need : currentOrder) {
-        if (!plateNames.contains(need)) {
+        if (!match || !plateNames.removeOne(need)) {
             match = false;
             break;
         }
@@ -414,12 +424,12 @@ void GameWindow::onSubmitClicked()
         generateNewOrder();
         orderSerial++;
         serialLabel->setText(QString("第 %1 单").arg(orderSerial));
-        scoreLabel->setText("得分：" + QString::number(score));
+        scoreLabel->setText("本局累计金币：" + QString::number(score));
     } else {
         // 错误：扣分，连击清零，订单不变
         score -= 5;
         comboCount = 0;
-        scoreLabel->setText("得分：" + QString::number(score));
+        scoreLabel->setText("本局累计金币：" + QString::number(score));
         showFeedback("订单错误！消耗原材料-5金币，请重新制作", "#E63946");
         currentIngredients.clear();
         updatePlateDisplay();
@@ -439,8 +449,12 @@ void GameWindow::generateNewOrder()
     QStringList order3 = {"底面包", "熟肉饼", "薯条", "可乐", "顶面包"};
     QStringList order4 = {"底面包", "生菜", "熟肉饼", "薯条", "可乐", "顶面包"};
 
-    qsrand(QTime::currentTime().msec());
-    int r = qrand() % ( isAdvancedMode? 5 : 3);
+    static bool seeded = false;
+    if (!seeded) {
+        qsrand(QTime::currentTime().msec());
+        seeded = true;
+    }
+    const int r = qrand() % (isAdvancedMode ? 5 : 3);
 
     if (r == 0) currentOrder = order0;
     else if (r == 1) currentOrder = order1;
@@ -584,7 +598,7 @@ void GameWindow::onRestartGame()
     orderSerial = 1;
     currentIngredients.clear();
 
-    scoreLabel->setText("积累金币：0");
+    scoreLabel->setText("本局累计金币：0");
     serialLabel->setText("第 1 单");
     timerLabel->setText("01:00");
     feedbackLabel->hide();
