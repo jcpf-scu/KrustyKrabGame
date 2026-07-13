@@ -10,5 +10,6 @@
         <file>images/bg-difficult.png</file>
         <file>images/shop_bg.jpg</file>
         <file>images/pause_bg.jpg</file>
+        <file>images/intro-bg.png</file>
     </qresource>
 </RCC>
