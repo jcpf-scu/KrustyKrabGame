@@ -480,7 +480,7 @@ GameWindow::GameWindow(bool advancedMode,QWidget *parent)
 
     // ---- 底部分数栏 ----
     QHBoxLayout *bottomBar = new QHBoxLayout();
-    scoreLabel = new QLabel("本局累计金币：0", this);
+    scoreLabel = new QLabel("本局得分：0", this);
     scoreLabel->setStyleSheet(SCORE_PANEL_STYLE);
     coinsLabel = new QLabel("当前金币：0", this);
     coinsLabel->setStyleSheet(SCORE_PANEL_STYLE);
@@ -492,7 +492,7 @@ GameWindow::GameWindow(bool advancedMode,QWidget *parent)
     shopBtn->setStyleSheet(BTN_STYLE);
     maxScoreLabel = new QLabel("最高纪录：" + QString::number(maxScore), this);
     maxScoreLabel->setStyleSheet(MAX_SCORE_PANEL_STYLE);
-    maxScoreLabel->setAlignment(Qt::AlignRight);
+    maxScoreLabel->setAlignment(Qt::AlignCenter);
     bottomBar->addWidget(scoreLabel);
     bottomBar->addWidget(coinsLabel);
     bottomBar->addWidget(buyTimeBtn);
@@ -788,7 +788,7 @@ void GameWindow::onOpenShopClicked()
         saveShopState();
     });
 
-    addShopRow("额外 10 秒", "立即为当前局增加 10 秒时间。", 18, false, "购买(18)", [this]() {
+    addShopRow("额外 10 秒", "立即为当前局增加 10 秒时间。", 15, false, "购买(15)", [this]() {
         timeLeft += 10;
         timerLabel->setText(formatTimerText(timeLeft));
         showFeedback("已获得额外 10 秒时间", "#2A9D8F");
@@ -875,7 +875,7 @@ void GameWindow::updateIngredientTimers()
         if (burnedInCollection) {
             items.clear();
             score -= 10;
-            scoreLabel->setText("本局累计金币：" + QString::number(score));
+            scoreLabel->setText("本局得分：" + QString::number(score));
             if (isSide) {
                 showFeedback("小吃盘有食材糊掉了，已清空，扣除 10 金币", "#E63946");
             } else {
@@ -916,7 +916,7 @@ void GameWindow::updateIngredientTimers()
         if (burnedThisTick) {
             currentIngredients.clear();
             score -= 10;
-            scoreLabel->setText("本局累计金币：" + QString::number(score));
+            scoreLabel->setText("本局得分：" + QString::number(score));
             showFeedback("有食材糊掉了，盘子已清空，扣除 10 金币", "#E63946");
         }
     }
@@ -1025,7 +1025,7 @@ void GameWindow::onSubmitClicked()
         generateNewOrder();
 
         scoreLabel->setText(
-            "本局累计金币：" + QString::number(score)
+            "本局得分：" + QString::number(score)
         );
     }
     else {
@@ -1033,7 +1033,7 @@ void GameWindow::onSubmitClicked()
         comboCount = 0;
 
         scoreLabel->setText(
-            "本局累计金币：" + QString::number(score)
+            "本局得分：" + QString::number(score)
         );
 
         showFeedback(
@@ -1077,7 +1077,7 @@ void GameWindow::onSubmitBurgerClicked()
         updatePlateDisplay();
 
         scoreLabel->setText(
-            "本局累计金币：" + QString::number(score)
+            "本局得分：" + QString::number(score)
         );
 
         showFeedback("汉堡订单错误，请重新制作", "#E63946");
@@ -1093,7 +1093,7 @@ void GameWindow::onSubmitBurgerClicked()
 
     updatePlateDisplay();
     scoreLabel->setText(
-        "本局累计金币：" + QString::number(score)
+        "本局得分：" + QString::number(score)
     );
 
     // 汉堡和小吃都提交完成后，才生成下一张订单
@@ -1134,7 +1134,7 @@ void GameWindow::onSubmitBurgerClicked()
         );
 
         scoreLabel->setText(
-            "本局累计金币：" + QString::number(score)
+            "本局得分：" + QString::number(score)
         );
 
         showFeedback(
@@ -1197,7 +1197,7 @@ void GameWindow::onSubmitSideClicked()
         updatePlateDisplay();
 
         scoreLabel->setText(
-            "本局累计金币：" + QString::number(score)
+            "本局得分：" + QString::number(score)
         );
 
         showFeedback(
@@ -1218,7 +1218,7 @@ void GameWindow::onSubmitSideClicked()
     updatePlateDisplay();
 
     scoreLabel->setText(
-        "本局累计金币：" + QString::number(score)
+        "本局得分：" + QString::number(score)
     );
 
     // 汉堡和小吃都完成后，才进入下一单
@@ -1259,7 +1259,7 @@ void GameWindow::onSubmitSideClicked()
         );
 
         scoreLabel->setText(
-            "本局累计金币：" + QString::number(score)
+            "本局得分：" + QString::number(score)
         );
 
         showFeedback(
@@ -1720,7 +1720,7 @@ void GameWindow::onRestartGame()
         }
     }
 
-    scoreLabel->setText("本局累计金币：0");
+    scoreLabel->setText("本局得分：0");
     serialLabel->setText("第 1 单");
     timerLabel->setText("01:00");
     updateCoinDisplay();
