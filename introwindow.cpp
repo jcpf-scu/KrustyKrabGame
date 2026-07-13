@@ -8,18 +8,24 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-IntroWindow::IntroWindow(QWidget *parent)
-    : QMainWindow(parent)
+IntroWindow::IntroWindow(QWidget *parent): QMainWindow(parent)
 {
     setFixedSize(1000, 750);
     setWindowTitle("游戏说明");
+
+    //背景
+    QPixmap bg(":/images/intro-bg.png");
+    bg = bg.scaled(1000,750,Qt::KeepAspectRatioByExpanding);
+    QLabel *bgLabel = new QLabel(this);
+    bgLabel->setPixmap(bg);
+    bgLabel->setGeometry(0,0,1000,750);
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
 
     QVBoxLayout *layout = new QVBoxLayout(central);
     layout->setSpacing(11);
-    layout->setContentsMargins(40, 26, 40, 20);
+    layout->setContentsMargins(100, 80, 40, 20);
 
     // 标题
     QLabel *title = new QLabel("蟹堡王烹饪挑战 - 游戏说明", this);
@@ -30,7 +36,6 @@ IntroWindow::IntroWindow(QWidget *parent)
     // 说明正文
     QLabel *text = new QLabel(this);
     text->setWordWrap(true);
-    text->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     text->setStyleSheet(
         "font-size: 25px; color: #1D3557; line-height: 1.5;"
         "font-family: 'Microsoft YaHei', sans-serif;"
@@ -57,15 +62,11 @@ IntroWindow::IntroWindow(QWidget *parent)
     closeBtn->setFixedHeight(55);
     closeBtn->setStyleSheet(
         "QPushButton { background-color: #E63946; color: white;"
-        "font-size: 26px; font-weight: bold; border-radius: 10px;"
-        "border: 2px solid rgba(255,255,255,180); }"
-        "QPushButton:hover { background-color: #C1121F; }"
-        "QPushButton:pressed { background-color: #A50E19; }"
+        "font-size: 26px; font-weight: bold; border-radius: 10px; }"
     );
     layout->addWidget(closeBtn);
 
     connect(closeBtn, &QPushButton::clicked, this, &IntroWindow::onCloseClicked);
-    setStyleSheet("QMainWindow { background-color: #F1FAEE; }");
 }
 
 IntroWindow::~IntroWindow() {}
