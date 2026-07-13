@@ -6,15 +6,47 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QWidget>
+#include <QPixmap>
 
 MenuWindow::MenuWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setFixedSize(450, 400);
+    setFixedSize(650, 550);
     setWindowTitle("游戏菜单");
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
+
+    // ========= 暂停菜单背景图片 =========
+    QLabel *bgLabel = new QLabel(central);
+    bgLabel->setGeometry(0, 0, 650, 550);
+    bgLabel->setScaledContents(true);
+
+    // 优先从Qt资源文件中读取
+    QPixmap bgPixmap(":/images/pause_bg.jpg");
+
+    // 资源文件读取失败时，尝试从项目images文件夹读取
+    if (bgPixmap.isNull()) {
+        bgPixmap.load("images/pause_bg.jpg");
+    }
+
+    if (!bgPixmap.isNull()) {
+        bgLabel->setPixmap(
+            bgPixmap.scaled(
+                bgLabel->size(),
+                Qt::KeepAspectRatioByExpanding,
+                Qt::SmoothTransformation
+            )
+        );
+    } else {
+        // 图片读取失败时使用备用颜色
+        bgLabel->setStyleSheet(
+            "background-color: #F1FAEE;"
+        );
+    }
+
+    // 将背景图片放到最底层
+    bgLabel->lower();
 
     QVBoxLayout *layout = new QVBoxLayout(central);
     layout->setSpacing(19);
@@ -22,7 +54,15 @@ MenuWindow::MenuWindow(QWidget *parent)
 
     QLabel *title = new QLabel("游戏暂停", this);
     title->setAlignment(Qt::AlignCenter);
-    title->setStyleSheet("font-size: 30px; font-weight: bold; color: #1D3557;");
+    title->setStyleSheet(
+        "font-size: 40px;"
+        "font-weight: bold;"
+        "color: #1D3557;"
+        "background-color: rgba(255, 255, 255, 190);"
+        "border-radius: 10px;"
+        "padding: 8px;"
+    );
+    //title->setStyleSheet("font-size: 30px; font-weight: bold; color: #1D3557;");
     layout->addWidget(title);
     layout->addSpacing(13);
 
@@ -51,25 +91,33 @@ MenuWindow::MenuWindow(QWidget *parent)
     connect(restartBtn,  &QPushButton::clicked, this, &MenuWindow::onRestartClicked);
     connect(backBtn,     &QPushButton::clicked, this, &MenuWindow::onBackClicked);
 
-    setStyleSheet("QMainWindow { background-color: #F1FAEE; }");
 }
 
 MenuWindow::~MenuWindow() {}
 
 void MenuWindow::onContinueClicked()
 {
+    // 防止重复点击
+    setEnabled(false);
+
+    // 只发送信号，窗口由 GameWindow 统一关闭
     emit continueGame();
-    close();
 }
 
 void MenuWindow::onRestartClicked()
 {
+    // 防止重复点击
+    setEnabled(false);
+
+    // 只发送信号，窗口由 GameWindow 统一关闭
     emit restartGame();
-    close();
 }
 
 void MenuWindow::onBackClicked()
 {
+    // 防止重复点击
+    setEnabled(false);
+
+    // 只发送信号，窗口由 GameWindow 统一关闭
     emit backToLobby();
-    close();
 }

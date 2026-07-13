@@ -10,6 +10,8 @@
 #include <QLabel>
 #include <QTimer>
 #include <QStringList>
+#include <QVector>
+#include <QDialog>
 
 /**
  * @class GameWindow
@@ -50,9 +52,14 @@ private slots:
 
     // ---- 操作按钮 ----
     void onGrillClicked();      // 煎制：生肉饼 → 肉饼
+    void onFryClicked();        // 炸薯条
     void onDiscardClicked();    // 丢弃：清空盘子
-    void onSubmitClicked();     // 提交订单并判分
+    void onSubmitClicked();     // 提交订单并判分（简单模式）
+    void onSubmitBurgerClicked(); // 提交汉堡订单（困难模式）
+    void onSubmitSideClicked();   // 提交小吃订单（困难模式）
     void onMenuClicked();       // 打开暂停菜单
+    void onBuyExtraTimeClicked(); // 购买额外时间技能
+    void onOpenShopClicked();   // 打开商店界面
 
     // ---- 计时器 ----
     void updateTimer();         // 每秒更新倒计时
@@ -68,6 +75,12 @@ private:
     void endGame();                         // 时间到，结算并返回大厅
     void showStarRating();                  // 弹出星级评价对话框
     void showFeedback(const QString &message, const QString &color);  // 顶部反馈提示
+    void loadPersistedCoins();              // 读取本地金币余额
+    void saveCoins() const;                 // 保存金币余额
+    void loadShopState();                   // 读取商店解锁状态
+    void saveShopState() const;             // 保存商店解锁状态
+    void updateCoinDisplay();               // 刷新金币显示
+    void applyTheme();                      // 应用当前皮肤主题
 
     // ---- 游戏状态数据 ----
     bool isPaused;              // 是否暂停
@@ -77,9 +90,19 @@ private:
     int score;                  // 本局得分
     int completedOrders;        // 本局完成订单数
     int timeLeft;               // 剩余秒数
+    int totalCoins;             // 当前累计金币余额
+    int cookingSpeedRemainingSeconds; // 加速煎制剩余生效秒数
+    int orderBonusRemainingSeconds;   // 订单奖励提升剩余生效秒数
+    int pattyCookingSpeedRemainingSeconds; // 肉饼加速剩余秒数
+    int friesCookingSpeedRemainingSeconds; // 薯条加速剩余秒数
+    int currentSkinId;          // 当前使用的皮肤编号：0=默认，1=海绵宝宝，2=派大星
 
-    QVector<IngredientItem> currentIngredients;  // 盘子里的食材
-    QStringList currentOrder;        // 当前订单要求的食材
+    QVector<IngredientItem> currentIngredients;  // 盘子里的食材（简单模式）
+    QVector<IngredientItem> burgerIngredients;   // 汉堡盘（困难模式）
+    QVector<IngredientItem> sideIngredients;     // 小吃盘（困难模式）
+    QStringList currentOrder;        // 当前订单要求的食材（简单模式）
+    QStringList currentBurgerOrder;  // 当前汉堡订单（困难模式）
+    QStringList currentSideOrder;    // 当前小吃订单（困难模式）
 
     // ---- UI 控件 ----
     QPushButton *bottomBunBtn;
@@ -90,13 +113,21 @@ private:
     QPushButton *friesBtn;
     QPushButton *colaBtn;
     QPushButton *grillBtn;
+    QPushButton *fryBtn;
     QPushButton *discardBtn;
     QPushButton *submitBtn;
+    QPushButton *submitBurgerBtn;
+    QPushButton *submitSideBtn;
     QPushButton *menuBtn;
+    QPushButton *buyTimeBtn;
+    QPushButton *shopBtn;
 
-    QLabel *plateLabel;         // 盘子显示
+    QLabel *plateLabel;         // 盘子显示（简单模式）
+    QLabel *burgerPlateLabel;   // 汉堡盘显示（困难模式）
+    QLabel *sidePlateLabel;     // 小吃盘显示（困难模式）
     QLabel *timerLabel;         // 倒计时
-    QLabel *scoreLabel;         // 得分
+    QLabel *scoreLabel;         // 本局得分
+    QLabel *coinsLabel;         // 当前金币余额
     QLabel *serialLabel;        // 订单序号
     QLabel *orderLabel;         // 订单内容
     QLabel *feedbackLabel;      // 操作反馈

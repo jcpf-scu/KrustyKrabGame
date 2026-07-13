@@ -15,6 +15,7 @@ DifficultyWindow::DifficultyWindow(QWidget *parent):QMainWindow(parent){
     QLabel *bgLabel = new QLabel(this);
     bgLabel->setPixmap(bg);
     bgLabel->setGeometry(0,0,1000,750);
+    bgLabel->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     bgLabel->lower();
 
     const int btnX = 550;
@@ -23,7 +24,6 @@ DifficultyWindow::DifficultyWindow(QWidget *parent):QMainWindow(parent){
     auto setupOptionButton = [&](QPushButton *btn, const QString &imagePath, int y) {
         QPixmap pix;
         if (!pix.load(imagePath)) {
-            // 资源路径加载失败时，回退到本地文件路径，避免 qrc 未刷新导致按钮不显示
             QString filePath = imagePath;
             filePath.remove(":/");
             pix.load(filePath);
@@ -32,27 +32,30 @@ DifficultyWindow::DifficultyWindow(QWidget *parent):QMainWindow(parent){
         btn->setFixedSize(btnW, btnH);
         btn->setGeometry(btnX, y, btnW, btnH);
         btn->setCursor(Qt::PointingHandCursor);
+        btn->setFocusPolicy(Qt::StrongFocus);
+        btn->setFlat(true);
+        btn->setAutoDefault(false);
+        btn->setStyleSheet(
+            "QPushButton {"
+            "border: none;"
+            "background: transparent;"
+            "padding: 0;"
+            "}"
+            "QPushButton:hover {"
+            "background-color: rgba(255, 255, 255, 24);"
+            "border-radius: 12px;"
+            "}"
+            "QPushButton:pressed {"
+            "background-color: rgba(255, 255, 255, 45);"
+            "border-radius: 12px;"
+            "}"
+        );
+
         if (!pix.isNull()) {
             btn->setIcon(QIcon(pix));
             btn->setIconSize(QSize(btnW, btnH));
             btn->setText("");
         }
-        btn->setStyleSheet(
-            QString(
-            "QPushButton {"
-            "border: 2px solid transparent;"
-            "border-radius: 12px;"
-            "background-color: transparent;"
-            "}"
-            "QPushButton:hover {"
-            "border: 2px solid rgba(255, 255, 255, 220);"
-            "background-color: rgba(255, 255, 255, 24);"
-            "}"
-            "QPushButton:pressed {"
-            "border: 2px solid rgba(255, 255, 255, 255);"
-            "background-color: rgba(255, 255, 255, 45);"
-            "}"
-        ));
     };
 
     //难度选择按钮

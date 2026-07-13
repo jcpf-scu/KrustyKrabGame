@@ -8,5 +8,7 @@
         <file>images/di-return.png</file>
         <file>images/di-simple.png</file>
         <file>images/bg-difficult.png</file>
+        <file>images/shop_bg.jpg</file>
+        <file>images/pause_bg.jpg</file>
     </qresource>
 </RCC>

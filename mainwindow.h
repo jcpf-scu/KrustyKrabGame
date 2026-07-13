@@ -26,9 +26,9 @@ private slots:
     void onExitClicked();    // 退出程序
 
 private:
-    QPushButton *startBtn;   // 开始游戏按钮
-    QPushButton *introBtn;   // 游戏说明按钮
-    QPushButton *exitBtn;    // 退出游戏按钮
+    QPushButton *startBtn = nullptr;   // 开始游戏按钮
+    QPushButton *introBtn = nullptr;   // 游戏说明按钮
+    QPushButton *exitBtn = nullptr;    // 退出游戏按钮
 };
 
 #endif
