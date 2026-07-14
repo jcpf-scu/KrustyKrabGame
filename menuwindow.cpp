@@ -66,21 +66,22 @@ MenuWindow::MenuWindow(QWidget *parent)
     layout->addWidget(title);
     layout->addSpacing(13);
 
-    // 创建统一样式按钮的辅助 lambda
-    auto makeBtn = [this](const QString &text, const QString &color) {
+    // 创建统一样式按钮的辅助 lambda（hover 必须改背景色，Qt 样式表不支持 opacity）
+    auto makeBtn = [this](const QString &text, const QString &color, const QString &hoverColor) {
         QPushButton *btn = new QPushButton(text, this);
         btn->setFixedHeight(63);
         btn->setStyleSheet(QString(
             "QPushButton { background-color: %1; color: white;"
             "font-size: 22px; font-weight: bold; border-radius: 10px; }"
-            "QPushButton:hover { opacity: 0.9; }"
-        ).arg(color));
+            "QPushButton:hover { background-color: %2; }"
+            "QPushButton:pressed { background-color: %2; }"
+        ).arg(color, hoverColor));
         return btn;
     };
 
-    QPushButton *continueBtn = makeBtn("继续游戏", "#2A9D8F");
-    QPushButton *restartBtn  = makeBtn("重新开始", "#E63946");
-    QPushButton *backBtn     = makeBtn("返回大厅", "#457B9D");
+    QPushButton *continueBtn = makeBtn("继续游戏", "#2A9D8F", "#21867A");
+    QPushButton *restartBtn  = makeBtn("重新开始", "#E63946", "#C1121F");
+    QPushButton *backBtn     = makeBtn("返回大厅", "#457B9D", "#3A6885");
 
     layout->addWidget(continueBtn);
     layout->addWidget(restartBtn);

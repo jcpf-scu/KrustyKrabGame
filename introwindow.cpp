@@ -63,6 +63,8 @@ IntroWindow::IntroWindow(QWidget *parent): QMainWindow(parent)
     closeBtn->setStyleSheet(
         "QPushButton { background-color: #E63946; color: white;"
         "font-size: 26px; font-weight: bold; border-radius: 10px; }"
+        "QPushButton:hover { background-color: #C1121F; }"
+        "QPushButton:pressed { background-color: #9B0A14; }"
     );
     layout->addWidget(closeBtn);
 

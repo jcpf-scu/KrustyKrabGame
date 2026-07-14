@@ -170,9 +170,6 @@ void GameWindow::updateCoinDisplay()
     if (coinsLabel) {
         coinsLabel->setText("当前金币：" + QString::number(totalCoins));
     }
-    if (buyTimeBtn) {
-        buyTimeBtn->setEnabled(totalCoins >= 15);
-    }
     if (shopBtn) {
         shopBtn->setText("商店(" + QString::number(totalCoins) + ")");
     }
@@ -220,8 +217,19 @@ void GameWindow::applyTheme()
     if (submitSideBtn) {
         submitSideBtn->setStyleSheet(actionButtonStyle);
     }
-    buyTimeBtn->setStyleSheet(QString("QPushButton { background-color: %1; color: white; font-size: 18px; font-weight: bold; border-radius: 8px; padding: 10px; } QPushButton:hover { background-color: %2; }").arg(accentColor).arg(panelColor));
-    shopBtn->setStyleSheet(QString("QPushButton { background-color: %1; color: white; font-size: 18px; font-weight: bold; border-radius: 8px; padding: 10px; } QPushButton:hover { background-color: %2; }").arg(accentColor).arg(panelColor));
+    // 购买时间按钮使用独立样式，保证悬停态始终清晰可见
+    buyTimeBtn->setStyleSheet(
+        "QPushButton { background-color: #2A9D8F; color: white;"
+        "font-size: 18px; font-weight: bold; border-radius: 8px; padding: 10px; }"
+        "QPushButton:hover { background-color: #21867A; }"
+        "QPushButton:pressed { background-color: #1A6B61; }"
+    );
+    shopBtn->setStyleSheet(QString(
+        "QPushButton { background-color: %1; color: white;"
+        "font-size: 18px; font-weight: bold; border-radius: 8px; padding: 10px; }"
+        "QPushButton:hover { background-color: %2; }"
+        "QPushButton:pressed { background-color: %2; }"
+    ).arg(accentColor).arg(panelColor));
     scoreLabel->setStyleSheet(QString("font-size: 28px; font-weight: bold; color: %1; background-color: rgba(29, 53, 87, 220); border-radius: 10px; padding: 8px 16px;").arg(accentColor));
     coinsLabel->setStyleSheet(QString("font-size: 28px; font-weight: bold; color: %1; background-color: rgba(29, 53, 87, 220); border-radius: 10px; padding: 8px 16px;").arg(accentColor));
 }
@@ -486,9 +494,16 @@ GameWindow::GameWindow(bool advancedMode,QWidget *parent)
     coinsLabel->setStyleSheet(SCORE_PANEL_STYLE);
     buyTimeBtn = new QPushButton("购买+10秒(15金币)", this);
     buyTimeBtn->setFixedHeight(50);
-    buyTimeBtn->setStyleSheet(BTN_STYLE);
+    buyTimeBtn->setCursor(Qt::PointingHandCursor);
+    buyTimeBtn->setStyleSheet(
+        "QPushButton { background-color: #2A9D8F; color: white;"
+        "font-size: 18px; font-weight: bold; border-radius: 8px; padding: 10px; }"
+        "QPushButton:hover { background-color: #21867A; }"
+        "QPushButton:pressed { background-color: #1A6B61; }"
+    );
     shopBtn = new QPushButton("商店(0)", this);
     shopBtn->setFixedHeight(50);
+    shopBtn->setCursor(Qt::PointingHandCursor);
     shopBtn->setStyleSheet(BTN_STYLE);
     maxScoreLabel = new QLabel("最高纪录：" + QString::number(maxScore), this);
     maxScoreLabel->setStyleSheet(MAX_SCORE_PANEL_STYLE);
